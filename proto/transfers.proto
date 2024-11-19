@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package qubic.transfers.proto;
+
+option go_package = "github.com/qubic/go-transfers/proto/";
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+message HealthResponse {
+  string status = 1;
+}
+
+service TransferService {
+
+  rpc Health(google.protobuf.Empty) returns (HealthResponse) {
+    option (google.api.http) = {
+      get: "/status/health"
+    };
+  }
+
+}
