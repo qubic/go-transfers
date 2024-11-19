@@ -26,7 +26,7 @@ func TestMain(m *testing.M) {
 	os.Exit(exitCode)
 }
 
-func Test_WhenHealth_ThenReturnStatusUp(t *testing.T) {
+func Test_whenHealth_thenReturnStatusUp(t *testing.T) {
 	httpClient := http.DefaultClient
 
 	response, err := httpClient.Get("http://localhost:8001/status/health")
@@ -46,6 +46,27 @@ func Test_WhenHealth_ThenReturnStatusUp(t *testing.T) {
 	// TODO how to validate json body?
 	if string(body) != "{\"status\":\"UP\"}" {
 		t.Errorf("Unexpected response body: [%s]", body)
+	}
+}
+
+func Test_GetAssetTransfersForTick_thenReturnAssetTransfers(t *testing.T) {
+	httpClient := http.DefaultClient
+	response, err := httpClient.Get("http://localhost:8001/v1/tick/1234/asset-transfers")
+	if err != nil {
+		t.Error(err)
+	}
+
+	if response.StatusCode != 200 {
+		t.Errorf("Unexpected response status: [%s]", response.Status)
+	}
+
+	body, err := readBody(response.Body)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if body == nil {
+		t.Error("Response body is nil")
 	}
 }
 

@@ -35,6 +35,12 @@ func (s *Server) Health(_ context.Context, _ *emptypb.Empty) (*proto.HealthRespo
 	}, nil
 }
 
+func (s *Server) GetAssetTransfersForTick(_ context.Context, request *proto.TickRequest) (*proto.AssetTransferResponse, error) {
+	tickNumber := request.GetTick()
+	log.Printf("tick number %d", tickNumber)
+	return &proto.AssetTransferResponse{}, nil
+}
+
 func (s *Server) Start() error {
 	srv := grpc.NewServer(
 		grpc.MaxRecvMsgSize(600*1024*1024),

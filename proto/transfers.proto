@@ -10,11 +10,39 @@ message HealthResponse {
   string status = 1;
 }
 
+message TickRequest {
+  uint32 tick = 1;
+}
+
+message EntityRequest {
+  string identity = 1;
+}
+
+message AssetTransferResponse {
+  string sourceId = 1;
+  string destinationId = 2;
+  string issuerId = 3;
+  string name = 4;
+  uint64 numberOfShares = 5;
+}
+
 service TransferService {
 
   rpc Health(google.protobuf.Empty) returns (HealthResponse) {
     option (google.api.http) = {
       get: "/status/health"
+    };
+  }
+
+  rpc GetAssetTransfersForTick(TickRequest) returns (AssetTransferResponse) {
+    option (google.api.http) = {
+      get: "/v1/tick/{tick}/asset-transfers"
+    };
+  }
+
+  rpc GetAssetTransfersForEntity(EntityRequest) returns (AssetTransferResponse) {
+    option (google.api.http) = {
+      get: "/v1/entity/{identity}/asset-transfers"
     };
   }
 
