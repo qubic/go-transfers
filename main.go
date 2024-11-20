@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 )
 
 const prefix = "QUBIC_TRANSFERS"
@@ -60,14 +59,6 @@ func run() error {
 		return errors.Wrap(err, "starting server")
 	}
 
-	srvErrors := make(chan error, 1)
-
-	go func() {
-		for {
-			time.Sleep(time.Second)
-		}
-	}()
-
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
@@ -76,8 +67,6 @@ func run() error {
 		case <-shutdown:
 			log.Println("main: shutting down...")
 			return nil
-		case err := <-srvErrors:
-			return errors.Wrap(err, "server error")
 		}
 	}
 
