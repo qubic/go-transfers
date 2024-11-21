@@ -5,13 +5,13 @@ import (
 	"github.com/ardanlabs/conf"
 	"github.com/pkg/errors"
 	"go-transfers/api"
+	"go-transfers/config"
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 )
-
-const prefix = "QUBIC_TRANSFERS"
 
 func main() {
 	if err := run(); err != nil {
@@ -20,41 +20,18 @@ func main() {
 }
 
 func run() error {
-
-	var config struct {
-		Server struct {
-			HttpHost string `conf:"default:0.0.0.0:8000"`
-			GrpcHost string `conf:"default:0.0.0.0:8001"`
-		}
-	}
-
-	if err := conf.Parse(os.Args[1:], prefix, &config); err != nil {
-		if errors.Is(err, conf.ErrHelpWanted) {
-			usage, err := conf.Usage(prefix, &config)
-			if err != nil {
-				return errors.Wrap(err, "generating config usage")
-			}
-			fmt.Println(usage)
+	configuration, configErr := loadConfig()
+	if configErr != nil {
+		if errors.Is(configErr, conf.ErrHelpWanted) ||
+			errors.Is(configErr, conf.ErrVersionWanted) {
 			return nil
+		} else {
+			return errors.Wrap(configErr, "loading config")
 		}
-		if errors.Is(err, conf.ErrVersionWanted) {
-			version, err := conf.VersionString(prefix, &config)
-			if err != nil {
-				return errors.Wrap(err, "generating config version")
-			}
-			fmt.Println(version)
-			return nil
-		}
-		return errors.Wrap(err, "parsing config")
 	}
 
-	out, err := conf.String(&config)
-	if err != nil {
-		return errors.Wrap(err, "generating config for output")
-	}
-	log.Printf("main: Config :\n%v\n", out)
-	srv := api.NewServer(config.Server.GrpcHost, config.Server.HttpHost)
-	err = srv.Start()
+	srv := api.NewServer(configuration.Server.GrpcHost, configuration.Server.HttpHost)
+	err := srv.Start()
 	if err != nil {
 		return errors.Wrap(err, "starting server")
 	}
@@ -69,5 +46,15 @@ func run() error {
 			return nil
 		}
 	}
+}
 
+func loadConfig() (*config.Config, error) {
+	configuration, configErr := config.GetConfig()
+	if configErr == nil {
+		out, toStringErr := conf.String(configuration)
+		if toStringErr == nil {
+			slog.Info(fmt.Sprintf("Config :\n%v\n", out))
+		}
+	}
+	return configuration, configErr
 }

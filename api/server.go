@@ -10,6 +10,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"log"
+	"log/slog"
 	"net"
 	"net/http"
 )
@@ -37,7 +38,7 @@ func (s *Server) Health(_ context.Context, _ *emptypb.Empty) (*proto.HealthRespo
 
 func (s *Server) GetAssetTransfersForTick(_ context.Context, request *proto.TickRequest) (*proto.AssetTransferResponse, error) {
 	tickNumber := request.GetTick()
-	log.Printf("tick number %d", tickNumber)
+	slog.Debug("Get asset transfers for tick.", "tick number", tickNumber)
 	return &proto.AssetTransferResponse{}, nil
 }
 

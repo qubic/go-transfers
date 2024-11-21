@@ -1,2 +1,9 @@
+# executable
+go-transfers
+
+# local config data
+.env*local
+
+# jetbrains ide
 *.iml
 .idea

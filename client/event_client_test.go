@@ -1,12 +1,24 @@
 package client
 
-import "testing"
+import (
+	"log"
+	"testing"
+)
 
-func Test_logEvents(t *testing.T) {
+const (
+	targetUrl string = "95.216.243.140:8003"
+)
 
-	err := logEvents()
+func Test_GetEvents(t *testing.T) {
+
+	eventClient, newErr := NewEventClient(targetUrl)
+	if newErr != nil {
+		t.Error(newErr)
+	}
+	const tickNumber uint32 = 17302596
+	tickEvents, err := eventClient.GetEvents(tickNumber)
 	if err != nil {
 		t.Error(err)
 	}
-
+	log.Printf("Tick events for tick %d: %+v", tickNumber, tickEvents)
 }

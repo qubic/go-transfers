@@ -20,8 +20,6 @@ func TestMain(m *testing.M) {
 	flag.Parse()
 	exitCode := m.Run()
 
-	// TODO shutdown server?
-
 	// Exit
 	os.Exit(exitCode)
 }
