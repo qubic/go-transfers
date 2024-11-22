@@ -45,14 +45,16 @@ func GetConfig() (*Config, error) {
 						slog.Error("generating usage message", "errors", usageErr)
 					}
 					fmt.Println(usage)
+					os.Exit(0)
 				}
-				//if errors.Is(err, conf.ErrVersionWanted) {
-				//	version, versionErr := conf.VersionString(envPrefix, &config)
-				//	if versionErr != nil {
-				//		slog.Error("generating version message", "errors", versionErr)
-				//	}
-				//	fmt.Println(version)
-				//}
+				if errors.Is(err, conf.ErrVersionWanted) {
+					version, versionErr := conf.VersionString(envPrefix, &config)
+					if versionErr != nil {
+						slog.Error("generating version message", "errors", versionErr)
+					}
+					fmt.Println(version)
+					os.Exit(0)
+				}
 				return &config, err
 			}
 			loadedConfig = &config
@@ -106,12 +108,13 @@ func getEnvPath(envFile string) string {
 		goModPath := filepath.Join(currentDir, "go.mod")
 		if _, err := os.Stat(goModPath); err == nil {
 			// reached go.mod dir. Don't go further.
+			slog.Debug("Go mod dir reached.", "path", goModPath)
 			break
 		}
 		parent := filepath.Dir(currentDir)
 		if string(os.PathSeparator) == parent {
 			// reached root dir. Can't go further
-			slog.Warn("found root directory. Can't go further.")
+			slog.Debug("Root dir reached.", "file", envFile)
 			break
 		} else {
 			currentDir = parent

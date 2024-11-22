@@ -11,6 +11,7 @@ func Test_GetConfig(t *testing.T) {
 	if getConfigErr != nil {
 		t.Error(getConfigErr)
 	}
+
 	var expected = Config{
 		Server: Server{
 			HttpHost: "1.2.3.4:5678",

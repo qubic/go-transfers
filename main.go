@@ -22,12 +22,7 @@ func main() {
 func run() error {
 	configuration, configErr := loadConfig()
 	if configErr != nil {
-		if errors.Is(configErr, conf.ErrHelpWanted) ||
-			errors.Is(configErr, conf.ErrVersionWanted) {
-			return nil
-		} else {
-			return errors.Wrap(configErr, "loading config")
-		}
+		return errors.Wrap(configErr, "loading config")
 	}
 
 	srv := api.NewServer(configuration.Server.GrpcHost, configuration.Server.HttpHost)
@@ -51,8 +46,7 @@ func run() error {
 func loadConfig() (*config.Config, error) {
 	configuration, configErr := config.GetConfig()
 	if configErr == nil {
-		out, toStringErr := conf.String(configuration)
-		if toStringErr == nil {
+		if out, toStringErr := conf.String(configuration); toStringErr == nil {
 			slog.Info(fmt.Sprintf("Config :\n%v\n", out))
 		}
 	}
