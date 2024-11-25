@@ -11,7 +11,7 @@ const (
 
 func Test_GetEvents(t *testing.T) {
 
-	eventClient, newErr := NewEventClient(targetUrl)
+	eventClient, newErr := NewIntegrationEventClient(targetUrl)
 	if newErr != nil {
 		t.Error(newErr)
 	}

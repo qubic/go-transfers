@@ -7,18 +7,22 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-type EventClient struct {
+type EventClient interface {
+	GetEvents(tickNumber uint32) (*eventspb.TickEvents, error)
+}
+
+type IntegrationEventClient struct {
 	protoClient eventspb.EventsServiceClient
 }
 
-func NewEventClient(targetUrl string) (*EventClient, error) {
+func NewIntegrationEventClient(targetUrl string) (*IntegrationEventClient, error) {
 	conn, err := grpc.NewClient(targetUrl, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	e := &EventClient{
+	e := &IntegrationEventClient{
 		protoClient: eventspb.NewEventsServiceClient(conn),
 	}
 	return e, err
 }
 
-func (eventClient *EventClient) GetEvents(tickNumber uint32) (*eventspb.TickEvents, error) {
+func (eventClient *IntegrationEventClient) GetEvents(tickNumber uint32) (*eventspb.TickEvents, error) {
 	return eventClient.protoClient.GetTickEvents(context.Background(), &eventspb.GetTickEventsRequest{Tick: tickNumber})
 }
