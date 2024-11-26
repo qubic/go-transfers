@@ -70,7 +70,8 @@ func migrateDatabase(config *config.DatabaseConfig) error {
 		return errors.Wrap(err, "running migrations")
 	} else {
 		version, dirty, _ := m.Version() // we don't care about error here. we only log info.
-		slog.Info("db migrations applied.", "Version", version, "Dirty", dirty)
+		slog.Info("db migrations applied:", "version", version, "dirty", dirty,
+			"changed", !errors.Is(err, migrate.ErrNoChange))
 	}
 	return nil
 }
@@ -79,7 +80,7 @@ func loadConfig() (*config.Config, error) {
 	configuration, configErr := config.GetConfig()
 	if configErr == nil {
 		if out, toStringErr := conf.String(configuration); toStringErr == nil {
-			slog.Info(fmt.Sprintf("Applied configuration properties:\n%v\n", out))
+			slog.Info(fmt.Sprintf("applied configuration properties.\n%v\n", out))
 		}
 	}
 	return configuration, configErr

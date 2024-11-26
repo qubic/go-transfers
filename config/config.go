@@ -96,7 +96,7 @@ func loadEnvFile(path string) {
 	if err != nil {
 		slog.Debug(fmt.Sprintf("There is no config file [%s].", realPath))
 	} else {
-		slog.Info("Loading config.", "file", realPath)
+		slog.Info("loaded config:", "file", realPath)
 	}
 }
 

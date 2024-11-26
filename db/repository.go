@@ -25,6 +25,18 @@ func NewRepository(c *config.DatabaseConfig) (*Repository, error) {
 	}
 }
 
+func (r *Repository) insertEntity(identity string) (int64, error) {
+	insertSQL := `INSERT INTO entities (identity) VALUES ($1);`
+	result, err := r.db.Exec(insertSQL, identity)
+	if err != nil {
+		slog.Error("error inserting entity.", "identity", identity)
+		return -1, err
+	}
+	id, err := result.LastInsertId()
+	slog.Debug("entity inserted successfully.", "id", id, "identity", identity)
+	return id, nil
+}
+
 func createDatabase(connectionString string) (*sql.DB, error) {
 
 	// open database
