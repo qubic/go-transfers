@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"go-transfers/api"
 	"go-transfers/config"
+	"go-transfers/db"
 	"log"
 	"log/slog"
 	"os"
@@ -29,10 +30,16 @@ func run() error {
 		return errors.Wrap(err, "loading config")
 	}
 
-	err = migrateDatabase(configuration)
+	err = migrateDatabase(&configuration.Database)
 	if err != nil {
 		return errors.Wrap(err, "migrating database")
 	}
+
+	repository, err := db.NewRepository(&configuration.Database)
+	if err != nil {
+		return errors.Wrap(err, "opening database")
+	}
+	_ = repository // FIXME
 
 	srv := api.NewServer(configuration.Server.GrpcHost, configuration.Server.HttpHost)
 	err = srv.Start()
@@ -52,11 +59,10 @@ func run() error {
 	}
 }
 
-func migrateDatabase(configuration *config.Config) error {
-	dbConfig := configuration.Database
+func migrateDatabase(config *config.DatabaseConfig) error {
 	// run migrations
 	m, err := migrate.New("file://db/migrations",
-		fmt.Sprintf("postgres://%s:%s@%s", dbConfig.User, dbConfig.Pass, dbConfig.Url))
+		fmt.Sprintf("postgres://%s:%s@%s:%d/%s", config.User, config.Pass, config.Host, config.Port, config.Name))
 	if err != nil {
 		return errors.Wrap(err, "initializing migrate")
 	}
