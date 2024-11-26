@@ -13,18 +13,25 @@ import (
 
 const envPrefix = "QUBIC_TRANSFERS"
 
-type Server struct {
+type ServerConfig struct {
 	HttpHost string
 	GrpcHost string
 }
 
-type EventClient struct {
+type EventClientConfig struct {
 	TargetUrl string
 }
 
+type DatabaseConfig struct {
+	User string
+	Pass string `conf:"noprint"`
+	Url  string
+}
+
 type Config struct {
-	Server      Server
-	EventClient EventClient
+	Server      ServerConfig
+	EventClient EventClientConfig
+	Database    DatabaseConfig
 }
 
 var lock = &sync.Mutex{}

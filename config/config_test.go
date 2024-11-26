@@ -13,11 +13,11 @@ func Test_GetConfig(t *testing.T) {
 	}
 
 	var expected = Config{
-		Server: Server{
+		Server: ServerConfig{
 			HttpHost: "1.2.3.4:5678",
 			GrpcHost: "1.2.3.4:6789",
 		},
-		EventClient: EventClient{
+		EventClient: EventClientConfig{
 			TargetUrl: "2.3.4.5:6789",
 		},
 	}

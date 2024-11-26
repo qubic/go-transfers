@@ -1,0 +1,1 @@
+drop table if exists qu_transfer_events;
