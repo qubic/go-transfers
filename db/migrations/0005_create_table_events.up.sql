@@ -4,7 +4,7 @@ create table if not exists events (
     event_id bigint unique not null,
     event_type smallint not null,
     event_data text not null,
-    created_at timestamp with time zone default now()
+    created_at timestamp with time zone default now() not null
 );
 
 create index on events(transaction_id);

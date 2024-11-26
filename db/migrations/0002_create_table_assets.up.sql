@@ -5,5 +5,5 @@ create table if not exists assets
     name       text    not null,
     verified   boolean not null default false,
     unique (issuer_id, name),
-    created_at timestamp with time zone default now()
+    created_at timestamp with time zone default now() not null
 );
