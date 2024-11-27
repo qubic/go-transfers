@@ -39,12 +39,20 @@ type Config struct {
 var lock = &sync.Mutex{}
 var loadedConfig *Config = nil
 
-func GetConfig() (*Config, error) {
+// GetConfig get config by reading configuration parameters. If available .env files
+// will be loaded and used as defaults. See https://github.com/joho/godotenv?tab=readme-ov-file#precedence--conventions
+// for used conventions.
+func GetConfig(path ...string) (*Config, error) {
+
 	if loadedConfig == nil {
 		lock.Lock()
 		defer lock.Unlock()
 		if loadedConfig == nil {
-			loadEnv()
+			if path == nil || len(path) == 0 {
+				loadEnv([]string{""})
+			} else {
+				loadEnv(path)
+			}
 			var config Config
 			err := conf.Parse(os.Args[1:], envPrefix, &config)
 			if err != nil {
@@ -73,7 +81,7 @@ func GetConfig() (*Config, error) {
 }
 
 // loadEnv for conventions see https://github.com/bkeepers/dotenv?tab=readme-ov-file#customizing-rails
-func loadEnv() {
+func loadEnv(path []string) {
 	const ENVIRONMENT = "QUBIC_TRANSFERS_ENV"
 	env := os.Getenv(ENVIRONMENT)
 	if "" == env {
@@ -81,54 +89,24 @@ func loadEnv() {
 	}
 	slog.Info("Configuring environment.", "environment", env)
 
-	loadEnvFile(".env." + env + ".local")
+	loadEnvFile(path, ".env."+env+".local")
 	if "test" != env {
 		// don't use local env overrides for test
-		loadEnvFile(".env.local")
+		loadEnvFile(path, ".env.local")
 	}
-	loadEnvFile(".env." + env)
-	loadEnvFile(".env")
+	loadEnvFile(path, ".env."+env)
+	loadEnvFile(path, ".env")
 }
 
-func loadEnvFile(path string) {
-	realPath := getEnvPath(path)
-	err := godotenv.Load(realPath)
-	if err != nil {
-		slog.Debug(fmt.Sprintf("There is no config file [%s].", realPath))
-	} else {
-		slog.Info("loaded config:", "file", realPath)
-	}
-}
-
-// getEnvPath returns the absolute path of the given environment file (envFile).
-// It searches for either the requested envFile or the 'go.mod' file from the current working directory upwards
-// Assumption is that env file needs at least be in the root ('go.mod') directory, if there is such an env file.
-func getEnvPath(envFile string) string {
-	currentDir, err := os.Getwd()
-	if err != nil {
-		slog.Error("failed to get current directory", "error", err)
-		panic(err)
-	}
-
-	for {
-		if _, err := os.Stat(filepath.Join(currentDir, envFile)); err == nil {
-			break // OK found
-		}
-		goModPath := filepath.Join(currentDir, "go.mod")
-		if _, err := os.Stat(goModPath); err == nil {
-			// reached go.mod dir. Don't go further.
-			slog.Debug("Go mod dir reached.", "path", goModPath)
-			break
-		}
-		parent := filepath.Dir(currentDir)
-		if string(os.PathSeparator) == parent {
-			// reached root dir. Can't go further
-			slog.Debug("Root dir reached.", "file", envFile)
-			break
+func loadEnvFile(path []string, envFileName string) {
+	for _, p := range path {
+		realPath := filepath.Join(p, envFileName)
+		err := godotenv.Load(realPath)
+		if err != nil {
+			slog.Debug(fmt.Sprintf("There is no config file [%s].", realPath))
 		} else {
-			currentDir = parent
+			slog.Info("loaded config:", "file", realPath)
 		}
 	}
 
-	return filepath.Join(currentDir, envFile)
 }

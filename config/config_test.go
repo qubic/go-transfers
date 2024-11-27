@@ -1,24 +1,33 @@
 package config
 
 import (
+	"log/slog"
 	"testing"
 )
 
 func Test_GetConfig(t *testing.T) {
+	slog.SetLogLoggerLevel(slog.LevelDebug)
 
 	t.Setenv("QUBIC_TRANSFERS_ENV", "test")
-	config, getConfigErr := GetConfig()
+	config, getConfigErr := GetConfig(".", "..")
 	if getConfigErr != nil {
 		t.Error(getConfigErr)
 	}
 
 	var expected = Config{
 		Server: ServerConfig{
-			HttpHost: "1.2.3.4:5678",
-			GrpcHost: "1.2.3.4:6789",
+			HttpHost: "1.2.3.4:5678", // .env.test
+			GrpcHost: "1.2.3.4:6789", // .env.test
 		},
 		EventClient: EventClientConfig{
-			TargetUrl: "2.3.4.5:6789",
+			TargetUrl: "2.3.4.5:6789", // .env.test
+		},
+		Database: DatabaseConfig{
+			User: "test",      // .env.test
+			Pass: "test-pass", // .env.test
+			Host: "localhost", // global default
+			Port: 5432,        // global default
+			Name: "test",      // .env.test
 		},
 	}
 
