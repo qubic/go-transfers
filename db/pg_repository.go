@@ -3,24 +3,19 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 	"go-transfers/config"
 	"log/slog"
 )
 
-type Repository interface {
-	GetOrCreateEntity(identity string) (int64, error)
-	GetEntityId(identity string) (int64, error)
-	Close()
-}
-
 type PgRepository struct {
-	db *sql.DB
+	db *sqlx.DB
 }
 
 func NewRepository(c *config.DatabaseConfig) (*PgRepository, error) {
-	connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+	connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s",
 		c.Host, c.Port, c.User, c.Pass, c.Name)
 	db, err := createDatabase(connectionString)
 	if err != nil {
@@ -66,10 +61,10 @@ func (r *PgRepository) GetEntityId(identity string) (int64, error) {
 	}
 }
 
-func createDatabase(connectionString string) (*sql.DB, error) {
+func createDatabase(connectionString string) (*sqlx.DB, error) {
 
 	// open database
-	db, err := sql.Open("postgres", connectionString)
+	db, err := sqlx.Connect("postgres", connectionString)
 	if err != nil {
 		return nil, err
 	}

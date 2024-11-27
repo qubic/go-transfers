@@ -6,7 +6,9 @@ require (
 	github.com/ardanlabs/conf v1.5.0
 	github.com/golang-migrate/migrate/v4 v4.18.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.21.0
+	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1
+	github.com/lib/pq v1.10.9
 	github.com/pkg/errors v0.9.1
 	github.com/qubic/go-events v0.2.4
 	github.com/qubic/go-qubic v0.1.4-0.20241030082827-d70a073f351d
@@ -21,7 +23,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/lib/pq v1.10.9 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/silenceper/pool v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
