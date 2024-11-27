@@ -39,7 +39,7 @@ func run() error {
 	if err != nil {
 		return errors.Wrap(err, "opening database")
 	}
-	_ = repository // FIXME
+	defer repository.Close()
 
 	srv := api.NewServer(configuration.Server.GrpcHost, configuration.Server.HttpHost)
 	err = srv.Start()
