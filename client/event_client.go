@@ -7,10 +7,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-type EventClient interface {
-	GetEvents(tickNumber uint32) (*eventspb.TickEvents, error)
-}
-
 type IntegrationEventClient struct {
 	protoClient eventspb.EventsServiceClient
 }

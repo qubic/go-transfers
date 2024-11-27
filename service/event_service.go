@@ -2,17 +2,21 @@ package service
 
 import (
 	"encoding/base64"
+	eventspb "github.com/qubic/go-events/proto"
 	"github.com/qubic/go-qubic/sdk/events"
-	"go-transfers/client"
 	"log/slog"
 )
 
+type EventClient interface {
+	GetEvents(tickNumber uint32) (*eventspb.TickEvents, error)
+}
+
 type EventService struct {
-	client       client.EventClient
+	client       EventClient
 	eventDecoder EventDecoder
 }
 
-func NewEventService(client client.EventClient) *EventService {
+func NewEventService(client EventClient) *EventService {
 	return &EventService{client: client, eventDecoder: EventDecoder{}}
 }
 
