@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"github.com/jmoiron/sqlx"
@@ -21,10 +22,7 @@ func NewRepository(c *config.DatabaseConfig) (*PgRepository, error) {
 	if err != nil {
 		return nil, err
 	} else {
-		repo := &PgRepository{
-			db: db,
-		}
-		return repo, nil
+		return &PgRepository{db: db}, nil
 	}
 }
 
@@ -47,9 +45,14 @@ func (r *PgRepository) GetOrCreateEntity(identity string) (int64, error) {
 
 func (r *PgRepository) GetEntityId(identity string) (int64, error) {
 	selectSql := `select id from entities where identity= $1;`
+
 	var id int64
-	row := r.db.QueryRow(selectSql, identity)
-	if err := row.Scan(&id); err != nil {
+	err := r.db.GetContext(context.Background(), &id, selectSql, identity)
+	if err != nil {
+		return id, err
+	}
+
+	if err := r.db.QueryRow(selectSql, identity).Scan(&id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			slog.Debug("no such entity.", "identity", identity)
 		} else {
