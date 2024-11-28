@@ -9,7 +9,7 @@ const (
 	targetUrl string = "95.216.243.140:8003"
 )
 
-func Test_GetEvents(t *testing.T) {
+func TestEventClient_GetEvents(t *testing.T) {
 
 	eventClient, newErr := NewIntegrationEventClient(targetUrl)
 	if newErr != nil {

@@ -24,7 +24,7 @@ func TestMain(m *testing.M) {
 	os.Exit(exitCode)
 }
 
-func Test_whenHealth_thenReturnStatusUp(t *testing.T) {
+func TestServer_whenHealth_thenReturnStatusUp(t *testing.T) {
 	httpClient := http.DefaultClient
 
 	response, err := httpClient.Get("http://localhost:8001/status/health")
@@ -47,7 +47,7 @@ func Test_whenHealth_thenReturnStatusUp(t *testing.T) {
 	}
 }
 
-func Test_GetAssetTransfersForTick_thenReturnAssetTransfers(t *testing.T) {
+func TestServer_GetAssetTransfersForTick_thenReturnAssetTransfers(t *testing.T) {
 	httpClient := http.DefaultClient
 	response, err := httpClient.Get("http://localhost:8001/v1/tick/1234/asset-transfers")
 	if err != nil {

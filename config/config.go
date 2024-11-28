@@ -23,11 +23,13 @@ type EventClientConfig struct {
 }
 
 type DatabaseConfig struct {
-	User string
-	Pass string `conf:"noprint"`
-	Host string
-	Port uint
-	Name string
+	User    string
+	Pass    string `conf:"noprint"`
+	Host    string
+	Port    int
+	Name    string
+	MaxIdle int
+	MaxOpen int
 }
 
 type Config struct {

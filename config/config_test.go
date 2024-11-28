@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func Test_GetConfig(t *testing.T) {
+func TestConfig_GetConfig(t *testing.T) {
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 
 	t.Setenv("QUBIC_TRANSFERS_ENV", "test")

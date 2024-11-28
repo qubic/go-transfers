@@ -17,7 +17,7 @@ func (eventClient *FakeEventClient) GetEvents(tickNumber uint32) (*eventspb.Tick
 	return eventClient.events[tickNumber], nil
 }
 
-func Test_ProcessTickEvents(t *testing.T) {
+func TestEventService_ProcessTickEvents(t *testing.T) {
 	// slog.SetLogLoggerLevel(slog.LevelDebug)
 
 	event := event(0, "sMmo18V9WMO9LstUtxvWC2ZfJc2/FZWKEUdAKOqNKDIBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBCDwAAAAAA")

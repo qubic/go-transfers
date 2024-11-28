@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func Test_Decode_QuTransferEvent(t *testing.T) {
+func TestEventDecoder_Decode_QuTransferEvent(t *testing.T) {
 	eventDecoder := EventDecoder{}
 
 	// asset transfer via qx contract (1000000 paid to BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARMID)
@@ -31,7 +31,7 @@ func Test_Decode_QuTransferEvent(t *testing.T) {
 	}
 }
 
-func Test_Decode_AssetOwnershipChangeEvent(t *testing.T) {
+func TestEventDecoder_Decode_AssetOwnershipChangeEvent(t *testing.T) {
 	eventDecoder := EventDecoder{}
 
 	eventData, err := base64.StdEncoding.DecodeString("sMmo18V9WMO9LstUtxvWC2ZfJc2/FZWKEUdAKOqNKDIvyKKaekppac06VyRMSMUCe1tpQO0R9znQUrQOndNX+ggwu2O/fV4WSsjL04aAYw/3Zwoevzn3IQtAvNyiU9Bf2XE+AAAAAABDRkIAAAAAAADQANAjGBU=")
@@ -64,7 +64,7 @@ func Test_Decode_AssetOwnershipChangeEvent(t *testing.T) {
 	}
 }
 
-func Test_Decode_AssetPossessionChangeEvent(t *testing.T) {
+func TestEventDecoder_Decode_AssetPossessionChangeEvent(t *testing.T) {
 	eventDecoder := EventDecoder{}
 
 	eventData, err := base64.StdEncoding.DecodeString("sMmo18V9WMO9LstUtxvWC2ZfJc2/FZWKEUdAKOqNKDIvyKKaekppac06VyRMSMUCe1tpQO0R9znQUrQOndNX+ggwu2O/fV4WSsjL04aAYw/3Zwoevzn3IQtAvNyiU9Bf2XE+AAAAAABDRkIAAAAAAADQANAjGBU=")
