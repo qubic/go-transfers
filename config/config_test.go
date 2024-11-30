@@ -23,11 +23,13 @@ func TestConfig_GetConfig(t *testing.T) {
 			TargetUrl: "2.3.4.5:6789", // .env.test
 		},
 		Database: DatabaseConfig{
-			User: "test",      // .env.test
-			Pass: "test-pass", // .env.test
-			Host: "localhost", // global default
-			Port: 5432,        // global default
-			Name: "test",      // .env.test
+			User:    "test",      // .env.test
+			Pass:    "test-pass", // .env.test
+			Host:    "localhost", // global default
+			Port:    5432,        // global default
+			Name:    "test",      // .env.test
+			MaxIdle: 10,
+			MaxOpen: 10,
 		},
 	}
 
