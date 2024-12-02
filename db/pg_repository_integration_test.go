@@ -56,7 +56,7 @@ func TestPgRepository_GetOrCreateEntity_GivenNoneThenCreate(t *testing.T) {
 	deleteEntity(entityId, t)
 }
 
-func TestPgRepository_GetOrCreateEntity_GivenEntity_ThenDoNotInsert(t *testing.T) {
+func TestPgRepository_GetOrCreateEntity_GivenEntity_ThenGet(t *testing.T) {
 	entityId, err := repository.insertEntity("MANUALLY-INSERTED")
 	assert.Nil(t, err)
 	assert.Greater(t, entityId, 0)
@@ -86,18 +86,18 @@ func TestPgRepository_insertAsset(t *testing.T) {
 
 }
 
-func TestPgRepository_getAssetId_ThenReturnId(t *testing.T) {
-	assetId, err := repository.getAssetId("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFXIB", "QX")
-	assert.Nil(t, err)
-	assert.Equal(t, 1, assetId)
-}
-
 func TestPgRepository_getAssetId_GivenUnknown_ThenErrNoRows(t *testing.T) {
 	_, err := repository.getAssetId("FOO", "QX")
 	assert.Equal(t, sql.ErrNoRows, err)
 }
 
-func TestPgRepository_GetOrCreateAsset_WhenNewEntity_ThenCreateEntityAndAsset(t *testing.T) {
+func TestPgRepository_GetOrCreateAsset_GivenAsset_ThenGet(t *testing.T) {
+	assetId, err := repository.GetOrCreateAsset("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFXIB", "QX")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, assetId) // in seed data
+}
+
+func TestPgRepository_GetOrCreateAsset_GivenNoEntity_ThenCreateEntityAndAsset(t *testing.T) {
 	assetId, err := repository.GetOrCreateAsset("FOO", "BAR")
 	assert.Nil(t, err)
 	assert.Greater(t, assetId, 0)
@@ -109,13 +109,102 @@ func TestPgRepository_GetOrCreateAsset_WhenNewEntity_ThenCreateEntityAndAsset(t 
 	deleteEntity(id, t)
 }
 
-func TestPgRepository_GetOrCreateAsset_WhenNewAsset_ThenCreateAsset(t *testing.T) {
-	assetId, err := repository.GetOrCreateAsset("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFXIB", "BAR")
+func TestPgRepository_GetOrCreateAsset_GivenNoAsset_ThenCreate(t *testing.T) {
+	assetId, err := repository.GetOrCreateAsset("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFXIB", "UNKNOWN")
 	assert.Nil(t, err)
 	assert.Greater(t, assetId, 0)
 
 	// clean up
 	deleteAsset(assetId, t)
+}
+
+// tick
+func TestPgRepository_GetOrCreateTick_GivenNewTick_ThenCreate(t *testing.T) {
+	tickId, err := repository.GetOrCreateTick(42)
+	assert.Nil(t, err)
+	assert.Greater(t, tickId, 0)
+
+	// clean up
+	deleteTick(tickId, t)
+}
+
+func TestPgRepository_GetOrCreateTick_GivenTick_ThenGet(t *testing.T) {
+	tickId, err := repository.insertTick(42)
+	assert.Nil(t, err)
+	assert.Greater(t, tickId, 0)
+
+	reloaded, err := repository.GetOrCreateTick(42)
+	assert.Nil(t, err)
+	assert.Equal(t, tickId, reloaded)
+
+	// clean up
+	deleteTick(tickId, t)
+}
+
+// transaction
+func TestPgRepository_GetOrCreateTransaction_GivenNoTransaction_ThenInsert(t *testing.T) {
+	tickId, err := repository.insertTick(42)
+	assert.Nil(t, err)
+
+	transactionId, err := repository.GetOrCreateTransaction("test-hash", tickId)
+	assert.Nil(t, err)
+	assert.Greater(t, transactionId, 0)
+
+	// clean up
+	deleteTransaction(transactionId, t)
+	deleteTick(tickId, t)
+}
+
+func TestPgRepository_GetOrCreateTransaction_GivenTransaction_ThenGet(t *testing.T) {
+	tickId, err := repository.insertTick(42)
+	assert.Nil(t, err)
+
+	transactionId, err := repository.insertTransaction("test-hash", tickId)
+	assert.Nil(t, err)
+	assert.Greater(t, transactionId, 0)
+
+	reloaded, err := repository.GetOrCreateTransaction("test-hash", tickId)
+	assert.Nil(t, err)
+	assert.Equal(t, transactionId, reloaded)
+
+	// clean up
+	deleteTransaction(transactionId, t)
+	deleteTick(tickId, t)
+}
+
+// event
+func TestPgRepository_GetOrCreateEvent_GivenNoEvent_ThenInsert(t *testing.T) {
+	tickId, err := repository.insertTick(42)
+	assert.Nil(t, err)
+	transactionId, err := repository.insertTransaction("test-hash", tickId)
+	assert.Nil(t, err)
+
+	eventId, err := repository.GetOrCreateEvent(transactionId, 1, 2, "foo")
+	assert.Nil(t, err)
+	assert.Greater(t, eventId, 0)
+
+	// clean up
+	deleteEvent(eventId, t)
+	deleteTransaction(transactionId, t)
+	deleteTick(tickId, t)
+}
+
+func TestPgRepository_GetOrCreateEvent_GivenEvent_ThenGet(t *testing.T) {
+	tickId, err := repository.insertTick(42)
+	assert.Nil(t, err)
+	transactionId, err := repository.insertTransaction("test-hash", tickId)
+	assert.Nil(t, err)
+	eventId, err := repository.insertEvent(transactionId, 1, 2, "foo")
+	assert.Nil(t, err)
+
+	reloaded, err := repository.GetOrCreateEvent(transactionId, 1, 2, "foo")
+	assert.Nil(t, err)
+	assert.Equal(t, eventId, reloaded)
+
+	// clean up
+	deleteEvent(eventId, t)
+	deleteTransaction(transactionId, t)
+	deleteTick(tickId, t)
 }
 
 func setup() {
@@ -140,6 +229,24 @@ func deleteEntity(id int, t *testing.T) {
 
 func deleteAsset(id int, t *testing.T) {
 	count, err := repository.delete(`delete from assets where id = $1;`, id)
+	assert.Nil(t, err)
+	assert.Equal(t, int64(1), count)
+}
+
+func deleteTransaction(id int, t *testing.T) {
+	count, err := repository.delete(`delete from transactions where id = $1;`, id)
+	assert.Nil(t, err)
+	assert.Equal(t, int64(1), count)
+}
+
+func deleteTick(id int, t *testing.T) {
+	count, err := repository.delete(`delete from ticks where id = $1;`, id)
+	assert.Nil(t, err)
+	assert.Equal(t, int64(1), count)
+}
+
+func deleteEvent(id int, t *testing.T) {
+	count, err := repository.delete(`delete from events where id = $1;`, id)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), count)
 }

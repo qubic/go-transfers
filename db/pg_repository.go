@@ -49,7 +49,7 @@ func (r *PgRepository) getEntityId(identity string) (int, error) {
 
 // asset
 
-func (r *PgRepository) GetOrCreateAsset(issuer string, name string) (int, error) {
+func (r *PgRepository) GetOrCreateAsset(issuer, name string) (int, error) {
 	id, err := r.getAssetId(issuer, name)
 	if errors.Is(err, sql.ErrNoRows) { // not found create
 		return r.createAsset(issuer, name)
@@ -58,7 +58,7 @@ func (r *PgRepository) GetOrCreateAsset(issuer string, name string) (int, error)
 	}
 }
 
-func (r *PgRepository) createAsset(issuer string, name string) (int, error) {
+func (r *PgRepository) createAsset(issuer, name string) (int, error) {
 	entityId, err := r.GetOrCreateEntity(issuer)
 	if err != nil {
 		return 0, err
@@ -66,7 +66,7 @@ func (r *PgRepository) createAsset(issuer string, name string) (int, error) {
 	return r.insertAsset(entityId, name)
 }
 
-func (r *PgRepository) getAssetId(issuer string, name string) (int, error) {
+func (r *PgRepository) getAssetId(issuer, name string) (int, error) {
 	selectSql := `select a.id from assets a
     join entities e on a.issuer_id = e.id
     where e.identity=$1 and a.name=$2;`
@@ -79,12 +79,67 @@ func (r *PgRepository) insertAsset(issuerId int, name string) (int, error) {
 	return insert(r.db, insertSql, issuerId, name)
 }
 
-// event
-//
-//func (r *PgRepository) insertEvent(transactionId int, eventId int, eventType int, eventData string) (int, error) {
-//	insertSql := `insert into events (transaction_id, event_id, event_type, event_data) values ($1, $2, $3, $4);`
-//	return insert(r.db, insertSql, transactionId, eventId, eventType, eventData)
-//}
+// tick
+
+func (r *PgRepository) GetOrCreateTick(tickNumber uint32) (int, error) {
+	id, err := r.getTickId(tickNumber)
+	if errors.Is(err, sql.ErrNoRows) {
+		id, err = r.insertTick(tickNumber)
+	}
+	return id, err
+}
+
+func (r *PgRepository) getTickId(tickNumber uint32) (int, error) {
+	selectSql := `select id from ticks where tick_number = $1;`
+	return getId(r.db, selectSql, tickNumber)
+}
+
+func (r *PgRepository) insertTick(tickNumber uint32) (int, error) {
+	insertSql := `insert into ticks (tick_number) values ($1) returning id;`
+	return insert(r.db, insertSql, tickNumber)
+}
+
+// transactions
+
+func (r *PgRepository) GetOrCreateTransaction(hash string, tickId int) (int, error) {
+	id, err := r.getTransactionId(hash, tickId)
+	if errors.Is(err, sql.ErrNoRows) {
+		id, err = r.insertTransaction(hash, tickId)
+	}
+	return id, err
+}
+
+func (r *PgRepository) getTransactionId(hash string, tickId int) (int, error) {
+	selectSql := `select id from transactions where hash = $1 and tick_id = $2;`
+	return getId(r.db, selectSql, hash, tickId)
+}
+
+func (r *PgRepository) insertTransaction(hash string, tickId int) (int, error) {
+	insertSql := `insert into transactions (hash, tick_id) values ($1, $2) returning id;`
+	return insert(r.db, insertSql, hash, tickId)
+}
+
+// events
+
+func (r *PgRepository) GetOrCreateEvent(transactionId int, eventEventId uint64, eventType uint32, eventData string) (int, error) {
+	id, err := r.getEventId(transactionId, eventEventId)
+	if errors.Is(err, sql.ErrNoRows) {
+		id, err = r.insertEvent(transactionId, eventEventId, eventType, eventData)
+	}
+	return id, err
+}
+
+func (r *PgRepository) insertEvent(transactionId int, eventEventId uint64, eventType uint32, eventData string) (int, error) {
+	insertSql := `insert into events (transaction_id, event_id, event_type, event_data) values ($1, $2, $3, $4) returning id;`
+	return insert(r.db, insertSql, transactionId, eventEventId, eventType, eventData)
+}
+
+func (r *PgRepository) getEventId(transactionId int, eventEventId uint64) (int, error) {
+	selectSql := `select id from events where transaction_id = $1 and event_id = $2;`
+	return getId(r.db, selectSql, transactionId, eventEventId)
+}
+
+// helper methods
 
 func getId(db *sqlx.DB, statement string, args ...interface{}) (int, error) {
 	var id int

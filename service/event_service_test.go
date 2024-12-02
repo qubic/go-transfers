@@ -2,6 +2,7 @@ package service
 
 import (
 	eventspb "github.com/qubic/go-events/proto"
+	"math/rand/v2"
 	"testing"
 )
 
@@ -17,10 +18,29 @@ func (eventClient *FakeEventClient) GetEvents(tickNumber uint32) (*eventspb.Tick
 	return eventClient.events[tickNumber], nil
 }
 
+type FakeRepository struct {
+}
+
+func (f FakeRepository) GetOrCreateEvent(_ int, _ uint64, _ uint32, _ string) (int, error) {
+	return rand.IntN(1000), nil
+}
+
+func (f FakeRepository) GetOrCreateTransaction(_ string, _ int) (int, error) {
+	return rand.IntN(1000), nil
+}
+
+func (f FakeRepository) GetOrCreateTick(_ uint32) (int, error) {
+	return rand.IntN(1000), nil
+}
+
+func (f FakeRepository) Close() {
+}
+
+//goland:noinspection SpellCheckingInspection
 func TestEventService_ProcessTickEvents(t *testing.T) {
 	// slog.SetLogLoggerLevel(slog.LevelDebug)
 
-	event := event(0, "sMmo18V9WMO9LstUtxvWC2ZfJc2/FZWKEUdAKOqNKDIBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBCDwAAAAAA")
+	event := event(0, "sMmo18V9WMO9LstUtxvWC2ZfJc2/FZWKEUdAKOqNKDIBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBCDwAAAAAA", &eventspb.Event_Header{EventId: rand.Uint64N(1000000)})
 
 	tx1Events := transactionEvents("tx-id-1", &event)
 	tx2Events := transactionEvents("tx-id-2", &event)
@@ -41,7 +61,7 @@ func TestEventService_ProcessTickEvents(t *testing.T) {
 		t.Error(err)
 	}
 
-	eventService := NewEventService(fakeEventClient)
+	eventService := NewEventService(fakeEventClient, &FakeRepository{})
 	err = eventService.ProcessTickEvents(123, 126)
 	if err != nil {
 		t.Error(err)
@@ -51,8 +71,9 @@ func TestEventService_ProcessTickEvents(t *testing.T) {
 
 }
 
-func event(eventType uint32, eventData string) eventspb.Event {
+func event(eventType uint32, eventData string, header *eventspb.Event_Header) eventspb.Event {
 	return eventspb.Event{
+		Header:    header,
 		EventType: eventType,
 		EventData: eventData,
 	}
