@@ -139,6 +139,26 @@ func (r *PgRepository) getEventId(transactionId int, eventEventId uint64) (int, 
 	return getId(r.db, selectSql, transactionId, eventEventId)
 }
 
+// qu transfer events
+
+func (r *PgRepository) GetOrCreateQuTransferEvent(eventId int, sourceEntityId int, destinationEntityId int, amount uint64) (int, error) {
+	id, err := r.getQuTransferEventId(eventId)
+	if errors.Is(err, sql.ErrNoRows) {
+		id, err = r.insertQuTransferEvent(eventId, sourceEntityId, destinationEntityId, amount)
+	}
+	return id, err
+}
+
+func (r *PgRepository) insertQuTransferEvent(eventId int, sourceEntityId int, destinationEntityId int, amount uint64) (int, error) {
+	insertSql := `insert into qu_transfer_events (event_id, source_entity_id, destination_entity_id, amount) values ($1, $2, $3, $4) returning id;`
+	return insert(r.db, insertSql, eventId, sourceEntityId, destinationEntityId, amount)
+}
+
+func (r *PgRepository) getQuTransferEventId(eventId int) (int, error) {
+	selectSql := `select id from qu_transfer_events where event_id = $1;`
+	return getId(r.db, selectSql, eventId)
+}
+
 // helper methods
 
 func getId(db *sqlx.DB, statement string, args ...interface{}) (int, error) {

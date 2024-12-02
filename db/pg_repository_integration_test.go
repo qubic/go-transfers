@@ -129,7 +129,7 @@ func TestPgRepository_GetOrCreateTick_GivenNewTick_ThenCreate(t *testing.T) {
 }
 
 func TestPgRepository_GetOrCreateTick_GivenTick_ThenGet(t *testing.T) {
-	tickId, err := repository.insertTick(42)
+	tickId, err := repository.GetOrCreateTick(42)
 	assert.Nil(t, err)
 	assert.Greater(t, tickId, 0)
 
@@ -143,7 +143,7 @@ func TestPgRepository_GetOrCreateTick_GivenTick_ThenGet(t *testing.T) {
 
 // transaction
 func TestPgRepository_GetOrCreateTransaction_GivenNoTransaction_ThenInsert(t *testing.T) {
-	tickId, err := repository.insertTick(42)
+	tickId, err := repository.GetOrCreateTick(42)
 	assert.Nil(t, err)
 
 	transactionId, err := repository.GetOrCreateTransaction("test-hash", tickId)
@@ -156,10 +156,10 @@ func TestPgRepository_GetOrCreateTransaction_GivenNoTransaction_ThenInsert(t *te
 }
 
 func TestPgRepository_GetOrCreateTransaction_GivenTransaction_ThenGet(t *testing.T) {
-	tickId, err := repository.insertTick(42)
+	tickId, err := repository.GetOrCreateTick(42)
 	assert.Nil(t, err)
 
-	transactionId, err := repository.insertTransaction("test-hash", tickId)
+	transactionId, err := repository.GetOrCreateTransaction("test-hash", tickId)
 	assert.Nil(t, err)
 	assert.Greater(t, transactionId, 0)
 
@@ -173,10 +173,11 @@ func TestPgRepository_GetOrCreateTransaction_GivenTransaction_ThenGet(t *testing
 }
 
 // event
+
 func TestPgRepository_GetOrCreateEvent_GivenNoEvent_ThenInsert(t *testing.T) {
-	tickId, err := repository.insertTick(42)
+	tickId, err := repository.GetOrCreateTick(42)
 	assert.Nil(t, err)
-	transactionId, err := repository.insertTransaction("test-hash", tickId)
+	transactionId, err := repository.GetOrCreateTransaction("test-hash", tickId)
 	assert.Nil(t, err)
 
 	eventId, err := repository.GetOrCreateEvent(transactionId, 1, 2, "foo")
@@ -190,11 +191,11 @@ func TestPgRepository_GetOrCreateEvent_GivenNoEvent_ThenInsert(t *testing.T) {
 }
 
 func TestPgRepository_GetOrCreateEvent_GivenEvent_ThenGet(t *testing.T) {
-	tickId, err := repository.insertTick(42)
+	tickId, err := repository.GetOrCreateTick(42)
 	assert.Nil(t, err)
-	transactionId, err := repository.insertTransaction("test-hash", tickId)
+	transactionId, err := repository.GetOrCreateTransaction("test-hash", tickId)
 	assert.Nil(t, err)
-	eventId, err := repository.insertEvent(transactionId, 1, 2, "foo")
+	eventId, err := repository.GetOrCreateEvent(transactionId, 1, 2, "foo")
 	assert.Nil(t, err)
 
 	reloaded, err := repository.GetOrCreateEvent(transactionId, 1, 2, "foo")
@@ -205,6 +206,33 @@ func TestPgRepository_GetOrCreateEvent_GivenEvent_ThenGet(t *testing.T) {
 	deleteEvent(eventId, t)
 	deleteTransaction(transactionId, t)
 	deleteTick(tickId, t)
+}
+
+// qu transfer event
+
+func TestPgRepository_GetOrCreateQuTransferEvent(t *testing.T) {
+	tickId, err := repository.GetOrCreateTick(42)
+	assert.Nil(t, err)
+	transactionId, err := repository.GetOrCreateTransaction("test-hash", tickId)
+	assert.Nil(t, err)
+	eventId, err := repository.GetOrCreateEvent(transactionId, 1, 2, "foo")
+	assert.Nil(t, err)
+	sourceEntityId, err := repository.GetOrCreateEntity("SOURCE_ID")
+	assert.Nil(t, err)
+	destinationEntityId, err := repository.GetOrCreateEntity("DESTINATION_ID")
+	assert.Nil(t, err)
+
+	transferId, err := repository.GetOrCreateQuTransferEvent(eventId, sourceEntityId, destinationEntityId, 123456789)
+	assert.Nil(t, err)
+	assert.Greater(t, transferId, 0)
+
+	// clean up
+	deleteTransferQuEvent(transferId, t)
+	deleteEvent(eventId, t)
+	deleteTransaction(transactionId, t)
+	deleteTick(tickId, t)
+	deleteEntity(sourceEntityId, t)
+	deleteEntity(destinationEntityId, t)
 }
 
 func setup() {
@@ -247,6 +275,12 @@ func deleteTick(id int, t *testing.T) {
 
 func deleteEvent(id int, t *testing.T) {
 	count, err := repository.delete(`delete from events where id = $1;`, id)
+	assert.Nil(t, err)
+	assert.Equal(t, int64(1), count)
+}
+
+func deleteTransferQuEvent(id int, t *testing.T) {
+	count, err := repository.delete(`delete from qu_transfer_events where id = $1;`, id)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), count)
 }

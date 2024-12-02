@@ -13,9 +13,11 @@ type EventClient interface {
 }
 
 type Repository interface {
+	GetOrCreateEntity(identity string) (int, error)
 	GetOrCreateTick(tickNumber uint32) (int, error)
 	GetOrCreateTransaction(hash string, tickId int) (int, error)
 	GetOrCreateEvent(transactionId int, eventEventId uint64, eventType uint32, eventData string) (int, error)
+	GetOrCreateQuTransferEvent(eventId int, sourceEntityId int, destinationEntityId int, amount uint64) (int, error)
 	Close()
 }
 
@@ -75,7 +77,6 @@ func (es *EventService) processTickEvents(tickNumber uint32) error {
 				if err != nil {
 					return err
 				}
-				_ = eventId // FIXME
 
 				eventData, err := base64.StdEncoding.DecodeString(event.EventData)
 				if err != nil {
@@ -91,9 +92,21 @@ func (es *EventService) processTickEvents(tickNumber uint32) error {
 						return err
 					}
 					transferEvent := decodedEvent.GetQuTransferEvent()
-					transferEvent.GetSourceId()
-					transferEvent.GetDestId()
-					transferEvent.GetAmount()
+					sourceId, err := es.eventRepository.GetOrCreateEntity(transferEvent.GetSourceId())
+					if err != nil {
+						return err
+					}
+					destinationId, err := es.eventRepository.GetOrCreateEntity(transferEvent.GetDestId())
+					if err != nil {
+						return err
+					}
+					transferId, err := es.eventRepository.GetOrCreateQuTransferEvent(eventId, sourceId, destinationId, transferEvent.GetAmount())
+					if err != nil {
+						return err
+					} else {
+						slog.Info("Stored qu transfer event.", "id", transferId)
+					}
+
 					// TODO store qu transfer event
 
 				case events.EventTypeAssetOwnershipChange:
