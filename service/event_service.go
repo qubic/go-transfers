@@ -10,6 +10,7 @@ import (
 
 type EventClient interface {
 	GetEvents(tickNumber uint32) (*eventspb.TickEvents, error)
+	GetStatus() (*eventspb.GetStatusResponse, error)
 }
 
 type Repository interface {
@@ -38,6 +39,12 @@ func NewEventService(client EventClient, eventRepository Repository) *EventServi
 
 func (es *EventService) ProcessTickEvents(from uint32, toExcl uint32) error {
 
+	status, err := es.client.GetStatus()
+	if err != nil {
+		slog.Error("Failed to get event status.")
+		return errors.Wrap(err, "Failed to get event status.")
+	}
+	slog.Info("Received event status", "last tick", status.GetLastProcessedTick())
 	slog.Info("Processing tick range.", "From", from, "To", toExcl)
 	for i := from; i < toExcl; i++ {
 		err := es.processTickEvents(i)
@@ -53,7 +60,7 @@ func (es *EventService) processTickEvents(tickNumber uint32) error {
 	tickEvents, err := es.client.GetEvents(tickNumber)
 	if err != nil {
 		slog.Error("Error getting events for tick.", "Tick", tickNumber)
-		return err
+		return errors.Wrap(err, "Error getting events for tick.")
 	}
 	slog.Info("Processing tick events.", "Tick", tickNumber)
 

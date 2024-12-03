@@ -14,6 +14,10 @@ func NewFakeEventClient(tickEvents map[uint32]*eventspb.TickEvents) (*FakeEventC
 	return &FakeEventClient{events: tickEvents}, nil
 }
 
+func (eventClient *FakeEventClient) GetStatus() (*eventspb.GetStatusResponse, error) {
+	return &eventspb.GetStatusResponse{}, nil
+}
+
 func (eventClient *FakeEventClient) GetEvents(tickNumber uint32) (*eventspb.TickEvents, error) {
 	return eventClient.events[tickNumber], nil
 }
