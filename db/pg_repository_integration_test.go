@@ -164,17 +164,19 @@ func TestPgRepository_GetOrCreateTransaction_GivenTransaction_ThenGet(t *testing
 // event
 
 func TestPgRepository_GetOrCreateEvent_GivenNoEvent_ThenInsert(t *testing.T) {
-	tickId, err, transactionId := setupEventTestData(t)
+	tickId, transactionId := setupTransactionTestData(t)
 
 	eventId, err := repository.GetOrCreateEvent(transactionId, 1, 2, "foo")
 	assert.Nil(t, err)
 	assert.Greater(t, eventId, 0)
 
-	cleanUpEventTestData(t, eventId, transactionId, tickId)
+	// clean up
+	deleteEvent(eventId, t)
+	cleanUpTransactionTestData(t, transactionId, tickId)
 }
 
 func TestPgRepository_GetOrCreateEvent_GivenEvent_ThenGet(t *testing.T) {
-	tickId, err, transactionId := setupEventTestData(t)
+	tickId, transactionId := setupTransactionTestData(t)
 	eventId, err := repository.insertEvent(transactionId, 1, 2, "foo")
 	assert.Nil(t, err)
 
@@ -182,13 +184,16 @@ func TestPgRepository_GetOrCreateEvent_GivenEvent_ThenGet(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, eventId, reloaded)
 
-	cleanUpEventTestData(t, eventId, transactionId, tickId)
+	// clean up
+	deleteEvent(eventId, t)
+	cleanUpTransactionTestData(t, transactionId, tickId)
 }
 
 // qu transfer event
 
 func TestPgRepository_GetOrCreateQuTransferEvent_GivenNoTransferEvent_ThenCreate(t *testing.T) {
-	tickId, transactionId, eventId, sourceEntityId, destinationEntityId := setupTransferEventTestData(t)
+	tickId, transactionId, eventId := setupEventTestData(t)
+	sourceEntityId, destinationEntityId := setupSourceAndDestinationEntity(t)
 
 	transferId, err := repository.GetOrCreateQuTransferEvent(eventId, sourceEntityId, destinationEntityId, 123456789)
 	assert.Nil(t, err)
@@ -196,11 +201,14 @@ func TestPgRepository_GetOrCreateQuTransferEvent_GivenNoTransferEvent_ThenCreate
 
 	// clean up
 	deleteTransferQuEvent(transferId, t)
-	cleanTransferEventTestData(t, eventId, transactionId, tickId, sourceEntityId, destinationEntityId)
+	cleanupEventTestData(t, transactionId, tickId, eventId)
+	deleteEntity(sourceEntityId, t)
+	deleteEntity(destinationEntityId, t)
 }
 
 func TestPgRepository_GetOrCreateQuTransferEvent_GivenTransferEvent_ThenGet(t *testing.T) {
-	tickId, transactionId, eventId, sourceEntityId, destinationEntityId := setupTransferEventTestData(t)
+	tickId, transactionId, eventId := setupEventTestData(t)
+	sourceEntityId, destinationEntityId := setupSourceAndDestinationEntity(t)
 	transferId, err := repository.insertQuTransferEvent(eventId, sourceEntityId, destinationEntityId, 123456789)
 	assert.Nil(t, err)
 
@@ -210,11 +218,16 @@ func TestPgRepository_GetOrCreateQuTransferEvent_GivenTransferEvent_ThenGet(t *t
 
 	// clean up
 	deleteTransferQuEvent(transferId, t)
-	cleanTransferEventTestData(t, eventId, transactionId, tickId, sourceEntityId, destinationEntityId)
+	cleanupEventTestData(t, transactionId, tickId, eventId)
+	deleteEntity(sourceEntityId, t)
+	deleteEntity(destinationEntityId, t)
 }
 
+// asset change event (ownership or possession change)
+
 func TestPgRepository_GetOrCreateAssetChangeEvent_GivenNone_ThenCreate(t *testing.T) {
-	tickId, transactionId, eventId, sourceEntityId, destinationEntityId := setupTransferEventTestData(t)
+	tickId, transactionId, eventId := setupEventTestData(t)
+	sourceEntityId, destinationEntityId := setupSourceAndDestinationEntity(t)
 	assetId, err := repository.getAssetId("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFXIB", "QX") // don't clean up
 	assert.Nil(t, err)
 
@@ -224,11 +237,14 @@ func TestPgRepository_GetOrCreateAssetChangeEvent_GivenNone_ThenCreate(t *testin
 
 	// clean up
 	deleteAssetChangeEvent(assetEventId, t)
-	cleanTransferEventTestData(t, eventId, transactionId, tickId, sourceEntityId, destinationEntityId)
+	cleanupEventTestData(t, transactionId, tickId, eventId)
+	deleteEntity(sourceEntityId, t)
+	deleteEntity(destinationEntityId, t)
 }
 
 func TestPgRepository_GetOrCreateAssetChangeEvent_GivenEntry_ThenGet(t *testing.T) {
-	tickId, transactionId, eventId, sourceEntityId, destinationEntityId := setupTransferEventTestData(t)
+	tickId, transactionId, eventId := setupEventTestData(t)
+	sourceEntityId, destinationEntityId := setupSourceAndDestinationEntity(t)
 	assetId, err := repository.getAssetId("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFXIB", "QX") // don't clean up
 	assert.Nil(t, err)
 
@@ -240,45 +256,82 @@ func TestPgRepository_GetOrCreateAssetChangeEvent_GivenEntry_ThenGet(t *testing.
 
 	// clean up
 	deleteAssetChangeEvent(assetEventId, t)
-	cleanTransferEventTestData(t, eventId, transactionId, tickId, sourceEntityId, destinationEntityId)
+	cleanupEventTestData(t, transactionId, tickId, eventId)
+	deleteEntity(sourceEntityId, t)
+	deleteEntity(destinationEntityId, t)
+}
+
+// asset issuance event
+
+func TestPgRepository_GetOrCreateAssetIssuanceEvent_GivenNone_ThenCreate(t *testing.T) {
+	tickId, transactionId, eventId := setupEventTestData(t)
+	issuerId, err := repository.GetOrCreateEntity("TEST_ISSUER_ID")
+	assert.Nil(t, err)
+	assetId, err := repository.GetOrCreateAsset("TEST_ISSUER_ID", "A-NAME")
+	assert.Nil(t, err)
+
+	issuanceEventId, err := repository.GetOrCreateAssetIssuanceEvent(eventId, assetId, 1234567890, []byte{0, 0, 0, 0, 0, 0, 0}, 0)
+	assert.Nil(t, err)
+	assert.Greater(t, issuanceEventId, 0)
+
+	deleteAssetIssuanceEvent(issuanceEventId, t)
+	cleanupEventTestData(t, transactionId, tickId, eventId)
+	deleteAsset(assetId, t)
+	deleteEntity(issuerId, t)
+}
+
+func TestPgRepository_GetOrCreateAssetIssuanceEvent_GivenEvent_ThenGet(t *testing.T) {
+	tickId, transactionId, eventId := setupEventTestData(t)
+	issuerId, err := repository.GetOrCreateEntity("TEST_ISSUER_ID")
+	assert.Nil(t, err)
+	assetId, err := repository.GetOrCreateAsset("TEST_ISSUER_ID", "A-NAME")
+	assert.Nil(t, err)
+	issuanceEventId, err := repository.insertAssetIssuanceEvent(eventId, assetId, 1234567890, []byte{0, 0, 1, 0, 0, 0, 0}, 2)
+	assert.Nil(t, err)
+
+	reloaded, err := repository.GetOrCreateAssetIssuanceEvent(eventId, assetId, 0, nil, 0)
+	assert.Nil(t, err)
+	assert.Equal(t, issuanceEventId, reloaded)
+
+	deleteAssetIssuanceEvent(issuanceEventId, t)
+	cleanupEventTestData(t, transactionId, tickId, eventId)
+	deleteAsset(assetId, t)
+	deleteEntity(issuerId, t)
 }
 
 // test data set ups and clean ups
 
-func setupEventTestData(t *testing.T) (int, error, int) {
+func setupTransactionTestData(t *testing.T) (int, int) {
 	tickId, err := repository.GetOrCreateTick(42)
 	assert.Nil(t, err)
 	transactionId, err := repository.GetOrCreateTransaction("test-hash", tickId)
 	assert.Nil(t, err)
-	return tickId, err, transactionId
+	return tickId, transactionId
 }
 
-func cleanUpEventTestData(t *testing.T, eventId int, transactionId int, tickId int) {
-	deleteEvent(eventId, t)
+func cleanUpTransactionTestData(t *testing.T, transactionId int, tickId int) {
 	deleteTransaction(transactionId, t)
 	deleteTick(tickId, t)
 }
 
-func setupTransferEventTestData(t *testing.T) (int, int, int, int, int) {
-	tickId, err := repository.GetOrCreateTick(42)
-	assert.Nil(t, err)
-	transactionId, err := repository.GetOrCreateTransaction("test-hash", tickId)
-	assert.Nil(t, err)
+func setupEventTestData(t *testing.T) (int, int, int) {
+	tickId, transactionId := setupTransactionTestData(t)
 	eventId, err := repository.GetOrCreateEvent(transactionId, 1, 2, "foo")
 	assert.Nil(t, err)
-	sourceEntityId, err := repository.GetOrCreateEntity("SOURCE_ID")
-	assert.Nil(t, err)
-	destinationEntityId, err := repository.GetOrCreateEntity("DESTINATION_ID")
-	assert.Nil(t, err)
-	return tickId, transactionId, eventId, sourceEntityId, destinationEntityId
+	return tickId, transactionId, eventId
 }
 
-func cleanTransferEventTestData(t *testing.T, eventId int, transactionId int, tickId int, sourceEntityId int, destinationEntityId int) {
+func cleanupEventTestData(t *testing.T, transactionId int, tickId int, eventId int) {
 	deleteEvent(eventId, t)
-	deleteTransaction(transactionId, t)
-	deleteTick(tickId, t)
-	deleteEntity(sourceEntityId, t)
-	deleteEntity(destinationEntityId, t)
+	cleanUpTransactionTestData(t, transactionId, tickId)
+}
+
+func setupSourceAndDestinationEntity(t *testing.T) (int, int) {
+	entityId1, err := repository.GetOrCreateEntity("FIRST_ENTITY_ID")
+	assert.Nil(t, err)
+	entityId2, err := repository.GetOrCreateEntity("SECOND_ENTITY_ID")
+	assert.Nil(t, err)
+	return entityId1, entityId2
 }
 
 func deleteEntity(id int, t *testing.T) {
@@ -319,6 +372,12 @@ func deleteTransferQuEvent(id int, t *testing.T) {
 
 func deleteAssetChangeEvent(id int, t *testing.T) {
 	count, err := repository.delete(`delete from asset_change_events where id = $1;`, id)
+	assert.Nil(t, err)
+	assert.Equal(t, int64(1), count)
+}
+
+func deleteAssetIssuanceEvent(id int, t *testing.T) {
+	count, err := repository.delete(`delete from asset_issuance_events where id = $1;`, id)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), count)
 }

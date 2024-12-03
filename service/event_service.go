@@ -20,6 +20,7 @@ type Repository interface {
 	GetOrCreateEvent(transactionId int, eventEventId uint64, eventType uint32, eventData string) (int, error)
 	GetOrCreateQuTransferEvent(eventId int, sourceEntityId int, destinationEntityId int, amount uint64) (int, error)
 	GetOrCreateAssetChangeEvent(eventId, assetId, sourceEntityId, destinationEntityId int, numberOfShares int64) (int, error)
+	GetOrCreateAssetIssuanceEvent(eventId int, assetId int, numberOfShares int64, unitOfMeasurement []byte, numberOfDecimalPlaces uint32) (int, error)
 	Close()
 }
 
@@ -165,7 +166,25 @@ func (es *EventService) processTickEvents(tickNumber uint32) error {
 						slog.Debug("Stored asset possession change event.", "id", assetChangeEventId, "eventType", event.EventType)
 					}
 				case events.EventTypeAssetIssuance:
-					// TODO store asset issuance event
+					decodedEvent, err := DecodeAssetIssuanceEvent(eventData)
+					if err != nil {
+						slog.Error("Could not decode event.", "eventType", event.EventType, "eventData", eventData, "error", err)
+						return err
+					}
+					assetIssuanceEvent := decodedEvent.GetAssetIssuanceEvent()
+					assetId, err := es.eventRepository.GetOrCreateAsset(assetIssuanceEvent.GetSourceId(), assetIssuanceEvent.GetAssetName())
+					if err != nil {
+						return err
+					}
+					assetIssuanceEventId, err := es.eventRepository.GetOrCreateAssetIssuanceEvent(eventId, assetId,
+						assetIssuanceEvent.GetNumberOfShares(),
+						assetIssuanceEvent.GetMeasurementUnit(),
+						assetIssuanceEvent.GetNumberOfDecimals())
+					if err != nil {
+						return err
+					} else {
+						slog.Debug("Stored asset issuance event.", "id", assetIssuanceEventId, "eventType", event.EventType)
+					}
 				default:
 					slog.Error("unexpected unhandled event type.",
 						"Transaction", transactionEvents.TxId,

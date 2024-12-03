@@ -179,6 +179,26 @@ func (r *PgRepository) getAssetChangeEventId(eventId int) (int, error) {
 	return getId(r.db, selectSql, eventId)
 }
 
+// asset issuance events
+
+func (r *PgRepository) GetOrCreateAssetIssuanceEvent(eventId int, assetId int, numberOfShares int64, unitOfMeasurement []byte, numberOfDecimalPlaces uint32) (int, error) {
+	id, err := r.getAssetIssuanceEventId(eventId)
+	if errors.Is(err, sql.ErrNoRows) {
+		id, err = r.insertAssetIssuanceEvent(eventId, assetId, numberOfShares, unitOfMeasurement, numberOfDecimalPlaces)
+	}
+	return id, err
+}
+
+func (r *PgRepository) insertAssetIssuanceEvent(eventId int, assetId int, numberOfShares int64, unitOfMeasurement []byte, numberOfDecimalPlaces uint32) (int, error) {
+	insertSql := `insert into asset_issuance_events (event_id, asset_id, number_of_shares, unit_of_measurement, number_of_decimal_places) VALUES ($1, $2, $3, $4, $5) returning id;`
+	return insert(r.db, insertSql, eventId, assetId, numberOfShares, unitOfMeasurement, numberOfDecimalPlaces)
+}
+
+func (r *PgRepository) getAssetIssuanceEventId(eventId int) (int, error) {
+	selectSql := `select id from asset_issuance_events where event_id = $1;`
+	return getId(r.db, selectSql, eventId)
+}
+
 // helper methods
 
 func getId(db *sqlx.DB, statement string, args ...interface{}) (int, error) {

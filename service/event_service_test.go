@@ -21,6 +21,10 @@ func (eventClient *FakeEventClient) GetEvents(tickNumber uint32) (*eventspb.Tick
 type FakeRepository struct {
 }
 
+func (f FakeRepository) GetOrCreateAssetIssuanceEvent(_ int, _ int, _ int64, _ []byte, _ uint32) (int, error) {
+	return rand.IntN(1000), nil
+}
+
 func (f FakeRepository) GetOrCreateAsset(_, _ string) (int, error) {
 	return rand.IntN(1000), nil
 }
