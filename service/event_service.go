@@ -14,10 +14,12 @@ type EventClient interface {
 
 type Repository interface {
 	GetOrCreateEntity(identity string) (int, error)
+	GetOrCreateAsset(issuer, name string) (int, error)
 	GetOrCreateTick(tickNumber uint32) (int, error)
 	GetOrCreateTransaction(hash string, tickId int) (int, error)
 	GetOrCreateEvent(transactionId int, eventEventId uint64, eventType uint32, eventData string) (int, error)
 	GetOrCreateQuTransferEvent(eventId int, sourceEntityId int, destinationEntityId int, amount uint64) (int, error)
+	GetOrCreateAssetChangeEvent(eventId, assetId, sourceEntityId, destinationEntityId int, numberOfShares int64) (int, error)
 	Close()
 }
 
@@ -52,13 +54,17 @@ func (es *EventService) processTickEvents(tickNumber uint32) error {
 		slog.Error("Error getting events for tick.", "Tick", tickNumber)
 		return err
 	}
-	slog.Debug("Processing events.", "TickEvents", tickEvents)
+	slog.Info("Processing tick events.", "Tick", tickNumber)
+
 	txEvs := tickEvents.TxEvents
 
 	for _, transactionEvents := range txEvs {
 
+		slog.Debug("Processing transaction events.", "transaction_events", transactionEvents)
 		relevantEvents := filterRelevantEvents(transactionEvents.Events)
 		if len(relevantEvents) > 0 {
+
+			slog.Info("Storing events.", "hash", transactionEvents.TxId, "count", len(relevantEvents))
 
 			tickId, err := es.eventRepository.GetOrCreateTick(tickEvents.GetTick())
 			if err != nil {
@@ -69,10 +75,12 @@ func (es *EventService) processTickEvents(tickNumber uint32) error {
 				return err
 			}
 			for _, event := range relevantEvents {
+				slog.Debug("Processing event.", "event", event)
 				eventEventId, err := getEventId(event)
 				if err != nil {
 					return err
 				}
+
 				eventId, err := es.eventRepository.GetOrCreateEvent(transactionId, eventEventId, event.EventType, event.EventData)
 				if err != nil {
 					return err
@@ -88,7 +96,7 @@ func (es *EventService) processTickEvents(tickNumber uint32) error {
 				case events.EventTypeQuTransfer:
 					decodedEvent, err := DecodeQuTransferEvent(eventData)
 					if err != nil {
-						slog.Error("Could not decode qu transfer event.", "eventType", event.EventType, "eventData", eventData, "error", err)
+						slog.Error("Could not decode event.", "eventType", event.EventType, "eventData", eventData, "error", err)
 						return err
 					}
 					transferEvent := decodedEvent.GetQuTransferEvent()
@@ -104,15 +112,58 @@ func (es *EventService) processTickEvents(tickNumber uint32) error {
 					if err != nil {
 						return err
 					} else {
-						slog.Info("Stored qu transfer event.", "id", transferId)
+						slog.Debug("Stored qu transfer event.", "id", transferId)
 					}
-
-					// TODO store qu transfer event
-
 				case events.EventTypeAssetOwnershipChange:
-					// TODO store asset ownership change event
+					decodedEvent, err := DecodeAssetOwnershipChangeEvent(eventData)
+					if err != nil {
+						slog.Error("Could not decode event.", "eventType", event.EventType, "eventData", eventData, "error", err)
+						return err
+					}
+					assetChangeEvent := decodedEvent.GetAssetOwnershipChangeEvent()
+					sourceId, err := es.eventRepository.GetOrCreateEntity(assetChangeEvent.GetSourceId())
+					if err != nil {
+						return err
+					}
+					destinationId, err := es.eventRepository.GetOrCreateEntity(assetChangeEvent.GetDestId())
+					if err != nil {
+						return err
+					}
+					assetId, err := es.eventRepository.GetOrCreateAsset(assetChangeEvent.GetIssuerId(), assetChangeEvent.GetAssetName())
+					if err != nil {
+						return err
+					}
+					assetChangeEventId, err := es.eventRepository.GetOrCreateAssetChangeEvent(eventId, assetId, sourceId, destinationId, assetChangeEvent.GetNumberOfShares())
+					if err != nil {
+						return err
+					} else {
+						slog.Debug("Stored asset ownership change event.", "id", assetChangeEventId, "eventType", event.EventType)
+					}
 				case events.EventTypeAssetPossessionChange:
-					// TODO store asset possession change event
+					decodedEvent, err := DecodeAssetPossessionChangeEvent(eventData)
+					if err != nil {
+						slog.Error("Could not decode event.", "eventType", event.EventType, "eventData", eventData, "error", err)
+						return err
+					}
+					assetChangeEvent := decodedEvent.GetAssetPossessionChangeEvent()
+					sourceId, err := es.eventRepository.GetOrCreateEntity(assetChangeEvent.GetSourceId())
+					if err != nil {
+						return err
+					}
+					destinationId, err := es.eventRepository.GetOrCreateEntity(assetChangeEvent.GetDestId())
+					if err != nil {
+						return err
+					}
+					assetId, err := es.eventRepository.GetOrCreateAsset(assetChangeEvent.GetIssuerId(), assetChangeEvent.GetAssetName())
+					if err != nil {
+						return err
+					}
+					assetChangeEventId, err := es.eventRepository.GetOrCreateAssetChangeEvent(eventId, assetId, sourceId, destinationId, assetChangeEvent.GetNumberOfShares())
+					if err != nil {
+						return err
+					} else {
+						slog.Debug("Stored asset possession change event.", "id", assetChangeEventId, "eventType", event.EventType)
+					}
 				case events.EventTypeAssetIssuance:
 					// TODO store asset issuance event
 				default:

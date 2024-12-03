@@ -159,6 +159,26 @@ func (r *PgRepository) getQuTransferEventId(eventId int) (int, error) {
 	return getId(r.db, selectSql, eventId)
 }
 
+// asset change events
+
+func (r *PgRepository) GetOrCreateAssetChangeEvent(eventId, assetId, sourceEntityId, destinationEntityId int, numberOfShares int64) (int, error) {
+	id, err := r.getAssetChangeEventId(eventId)
+	if errors.Is(err, sql.ErrNoRows) {
+		id, err = r.insertAssetChangeEvent(eventId, assetId, sourceEntityId, destinationEntityId, numberOfShares)
+	}
+	return id, err
+}
+
+func (r *PgRepository) insertAssetChangeEvent(eventId, assetId, sourceEntityId, destinationEntityId int, numberOfShares int64) (int, error) {
+	insertSql := `insert into asset_change_events (event_id, asset_id, source_entity_id, destination_entity_id, number_of_shares) values ($1, $2, $3, $4, $5) returning id;`
+	return insert(r.db, insertSql, eventId, assetId, sourceEntityId, destinationEntityId, numberOfShares)
+}
+
+func (r *PgRepository) getAssetChangeEventId(eventId int) (int, error) {
+	selectSql := `select id from asset_change_events where event_id = $1;`
+	return getId(r.db, selectSql, eventId)
+}
+
 // helper methods
 
 func getId(db *sqlx.DB, statement string, args ...interface{}) (int, error) {

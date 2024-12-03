@@ -18,7 +18,7 @@ var (
 
 func TestEventService_GetEventRange(t *testing.T) {
 
-	err := eventService.ProcessTickEvents(16660843, 16660844)
+	err := eventService.ProcessTickEvents(17525550, 17525600)
 	if err != nil {
 		t.Error(err)
 	}
@@ -27,7 +27,7 @@ func TestEventService_GetEventRange(t *testing.T) {
 // test setup
 
 func TestMain(m *testing.M) {
-	slog.SetLogLoggerLevel(slog.LevelDebug)
+	// slog.SetLogLoggerLevel(slog.LevelDebug)
 	setup()
 	// Parse args and run
 	flag.Parse()

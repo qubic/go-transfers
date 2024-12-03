@@ -21,11 +21,19 @@ func (eventClient *FakeEventClient) GetEvents(tickNumber uint32) (*eventspb.Tick
 type FakeRepository struct {
 }
 
-func (f FakeRepository) GetOrCreateEntity(identity string) (int, error) {
+func (f FakeRepository) GetOrCreateAsset(_, _ string) (int, error) {
 	return rand.IntN(1000), nil
 }
 
-func (f FakeRepository) GetOrCreateQuTransferEvent(eventId int, sourceEntityId int, destinationEntityId int, amount uint64) (int, error) {
+func (f FakeRepository) GetOrCreateAssetChangeEvent(_, _, _, _ int, _ int64) (int, error) {
+	return rand.IntN(1000), nil
+}
+
+func (f FakeRepository) GetOrCreateEntity(_ string) (int, error) {
+	return rand.IntN(1000), nil
+}
+
+func (f FakeRepository) GetOrCreateQuTransferEvent(_ int, _ int, _ int, _ uint64) (int, error) {
 	return rand.IntN(1000), nil
 }
 
