@@ -19,8 +19,9 @@ func TestConfig_GetConfig(t *testing.T) {
 			HttpHost: "1.2.3.4:5678", // .env.test
 			GrpcHost: "1.2.3.4:6789", // .env.test
 		},
-		EventClient: EventClientConfig{
-			TargetUrl: "2.3.4.5:6789", // .env.test
+		Client: ClientConfig{
+			EventApiUrl: "2.3.4.5:6789", // .env.test
+			CoreApiUrl:  "2.3.4.5:5678",
 		},
 		Database: DatabaseConfig{
 			User:    "test",      // .env.test

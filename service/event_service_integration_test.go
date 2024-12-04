@@ -18,7 +18,7 @@ var (
 
 func TestEventService_GetEventRange(t *testing.T) {
 
-	err := eventService.ProcessTickEvents(17396005, 17396010)
+	err := eventService.ProcessTickEvents(17396000, 17396010)
 	if err != nil {
 		t.Error(err)
 	}
@@ -27,6 +27,11 @@ func TestEventService_GetEventRange(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+//func TestEventService_Loop(t *testing.T) {
+//	go eventService.SyncInLoop()
+//	time.Sleep(time.Second * 30)
+//}
 
 // test setup
 
@@ -48,7 +53,7 @@ func setup() {
 		os.Exit(-1)
 	}
 
-	eventClient, err = client.NewIntegrationEventClient(c.EventClient.TargetUrl)
+	eventClient, err = client.NewIntegrationEventClient(c.Client.EventApiUrl, c.Client.CoreApiUrl)
 	if err != nil {
 		slog.Error("error creating event client")
 		os.Exit(-1)
@@ -60,7 +65,8 @@ func setup() {
 		os.Exit(-1)
 	}
 
-	eventService = NewEventService(eventClient, repository)
+	eventProcessor := NewEventProcessor(repository)
+	eventService = NewEventService(eventClient, eventProcessor)
 }
 
 func teardown() {

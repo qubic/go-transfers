@@ -2,6 +2,7 @@ package service
 
 import (
 	eventspb "github.com/qubic/go-events/proto"
+	"go-transfers/client"
 	"math/rand/v2"
 	"testing"
 )
@@ -14,12 +15,16 @@ func NewFakeEventClient(tickEvents map[uint32]*eventspb.TickEvents) (*FakeEventC
 	return &FakeEventClient{events: tickEvents}, nil
 }
 
-func (eventClient *FakeEventClient) GetStatus() (*eventspb.GetStatusResponse, error) {
-	return &eventspb.GetStatusResponse{}, nil
+func (eventClient *FakeEventClient) GetStatus() (*client.EventStatus, error) {
+	return &client.EventStatus{}, nil
 }
 
 func (eventClient *FakeEventClient) GetEvents(tickNumber uint32) (*eventspb.TickEvents, error) {
 	return eventClient.events[tickNumber], nil
+}
+
+func (eventClient *FakeEventClient) GetTickInfo() (*client.TickInfo, error) {
+	return &client.TickInfo{}, nil
 }
 
 type FakeRepository struct {
@@ -85,7 +90,11 @@ func TestEventService_ProcessTickEvents(t *testing.T) {
 		t.Error(err)
 	}
 
-	eventService := NewEventService(fakeEventClient, &FakeRepository{})
+	eventProcessor := EventProcessor{
+		repository: &FakeRepository{},
+	}
+
+	eventService := NewEventService(fakeEventClient, &eventProcessor)
 	err = eventService.ProcessTickEvents(123, 126)
 	if err != nil {
 		t.Error(err)

@@ -20,11 +20,17 @@ func TestEventClient_GetEvents(t *testing.T) {
 	slog.Info("Received tick events.", "tick", tickNumber, "events", tickEvents)
 }
 
-func TestEventClient_GetStatue(t *testing.T) {
+func TestEventClient_GetStatus(t *testing.T) {
 	status, err := eventClient.GetStatus()
 	assert.Nil(t, err)
-	assert.NotNil(t, status.LastProcessedTick, "last processed tick is nil")
+	assert.NotNil(t, status.AvailableTick, "last processed tick is nil")
 	slog.Info("Received event status", "event status", status)
+}
+
+func TestEventClient_GetTickInfo(t *testing.T) {
+	info, err := eventClient.GetTickInfo()
+	assert.Nil(t, err)
+	slog.Info("Received tick info", "tick info", info)
 }
 
 func TestMain(m *testing.M) {
@@ -44,7 +50,7 @@ func setup() {
 		os.Exit(-1)
 	}
 
-	eventClient, err = NewIntegrationEventClient(c.EventClient.TargetUrl)
+	eventClient, err = NewIntegrationEventClient(c.Client.EventApiUrl, c.Client.CoreApiUrl)
 	if err != nil {
 		slog.Error("error creating event client")
 		os.Exit(-1)

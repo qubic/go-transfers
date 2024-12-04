@@ -18,8 +18,9 @@ type ServerConfig struct {
 	GrpcHost string
 }
 
-type EventClientConfig struct {
-	TargetUrl string
+type ClientConfig struct {
+	EventApiUrl string
+	CoreApiUrl  string
 }
 
 type DatabaseConfig struct {
@@ -33,9 +34,9 @@ type DatabaseConfig struct {
 }
 
 type Config struct {
-	Server      ServerConfig
-	EventClient EventClientConfig
-	Database    DatabaseConfig
+	Server   ServerConfig
+	Client   ClientConfig
+	Database DatabaseConfig
 }
 
 var lock = &sync.Mutex{}

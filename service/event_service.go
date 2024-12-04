@@ -1,16 +1,18 @@
 package service
 
 import (
-	"encoding/base64"
 	"github.com/pkg/errors"
 	eventspb "github.com/qubic/go-events/proto"
-	"github.com/qubic/go-qubic/sdk/events"
+	"go-transfers/client"
 	"log/slog"
+	"math"
+	"time"
 )
 
 type EventClient interface {
 	GetEvents(tickNumber uint32) (*eventspb.TickEvents, error)
-	GetStatus() (*eventspb.GetStatusResponse, error)
+	GetStatus() (*client.EventStatus, error)
+	GetTickInfo() (*client.TickInfo, error)
 }
 
 type Repository interface {
@@ -26,209 +28,82 @@ type Repository interface {
 }
 
 type EventService struct {
-	client          EventClient
-	eventRepository Repository
+	client         EventClient
+	eventProcessor *EventProcessor
+	repository     Repository
 }
 
-func NewEventService(client EventClient, eventRepository Repository) *EventService {
-	return &EventService{
-		client:          client,
-		eventRepository: eventRepository,
+func NewEventService(client EventClient, eventProcessor *EventProcessor) *EventService {
+	es := EventService{
+		client:         client,
+		eventProcessor: eventProcessor,
+	}
+	return &es
+}
+
+var processedTick uint64 = 17563100
+
+func (es *EventService) SyncInLoop() {
+	loopTick := time.Tick(time.Second * 3)
+	for range loopTick {
+		err := es.sync()
+		time.Sleep(time.Second)
+		if err != nil {
+			slog.Error("processing tick events", "err", err.Error())
+		}
 	}
 }
 
-func (es *EventService) ProcessTickEvents(from uint32, toExcl uint32) error {
+func (es *EventService) sync() error {
+	tickInfo, err := es.client.GetTickInfo()
+	if err != nil {
+		return errors.Wrap(err, "getting tick info")
+	}
+	if uint64(tickInfo.InitialTick) > processedTick {
+		slog.Info("initial tick > processed tick", "initial", tickInfo.InitialTick, "processed", processedTick)
+	}
+	startTick := uint64(math.Max(float64(processedTick+1), float64(tickInfo.InitialTick)))
 
 	status, err := es.client.GetStatus()
 	if err != nil {
-		slog.Error("Failed to get event status.")
-		return errors.Wrap(err, "Failed to get event status.")
+		return errors.Wrap(err, "getting event status.")
 	}
-	slog.Info("Received event status", "last tick", status.GetLastProcessedTick())
-	slog.Info("Processing tick range.", "From", from, "To", toExcl)
-	for i := from; i < toExcl; i++ {
-		err := es.processTickEvents(i)
+	endTick := uint64(math.Min(float64(status.AvailableTick), float64(tickInfo.CurrentTick)))
+	endTick = uint64(math.Min(float64(endTick), float64(startTick+100))) // max batch process 100 ticks per run
+
+	slog.Info("Status:", "processed", processedTick, "current", tickInfo.CurrentTick, "available", status.AvailableTick)
+	if startTick <= endTick { // ok
+		slog.Info("Syncing:", "from", startTick, "to", endTick)
+		err := es.ProcessTickEvents(startTick, endTick+1)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "processing tick events")
 		}
-	}
-	return nil
-
-}
-
-func (es *EventService) processTickEvents(tickNumber uint32) error {
-	tickEvents, err := es.client.GetEvents(tickNumber)
-	if err != nil {
-		slog.Error("Error getting events for tick.", "Tick", tickNumber)
-		return errors.Wrap(err, "Error getting events for tick.")
-	}
-	slog.Info("Processing tick events.", "Tick", tickNumber)
-
-	txEvs := tickEvents.TxEvents
-
-	for _, transactionEvents := range txEvs {
-
-		slog.Debug("Processing transaction events.", "transaction_events", transactionEvents)
-		relevantEvents := filterRelevantEvents(transactionEvents.Events)
-		if len(relevantEvents) > 0 {
-
-			slog.Info("Storing events.", "hash", transactionEvents.TxId, "count", len(relevantEvents))
-
-			tickId, err := es.eventRepository.GetOrCreateTick(tickEvents.GetTick())
-			if err != nil {
-				return err
-			}
-			transactionId, err := es.eventRepository.GetOrCreateTransaction(transactionEvents.GetTxId(), tickId)
-			if err != nil {
-				return err
-			}
-			for _, event := range relevantEvents {
-				slog.Debug("Processing event.", "event", event)
-				eventEventId, err := getEventId(event)
-				if err != nil {
-					return err
-				}
-
-				eventId, err := es.eventRepository.GetOrCreateEvent(transactionId, eventEventId, event.EventType, event.EventData)
-				if err != nil {
-					return err
-				}
-
-				eventData, err := base64.StdEncoding.DecodeString(event.EventData)
-				if err != nil {
-					slog.Error("Could not base64 decode event data.", "eventData", event.GetEventData(), "error", err)
-					return err
-				}
-				eventType := uint8(event.EventType)
-				switch eventType {
-				case events.EventTypeQuTransfer:
-					decodedEvent, err := DecodeQuTransferEvent(eventData)
-					if err != nil {
-						slog.Error("Could not decode event.", "eventType", event.EventType, "eventData", eventData, "error", err)
-						return err
-					}
-					transferEvent := decodedEvent.GetQuTransferEvent()
-					sourceId, err := es.eventRepository.GetOrCreateEntity(transferEvent.GetSourceId())
-					if err != nil {
-						return err
-					}
-					destinationId, err := es.eventRepository.GetOrCreateEntity(transferEvent.GetDestId())
-					if err != nil {
-						return err
-					}
-					transferId, err := es.eventRepository.GetOrCreateQuTransferEvent(eventId, sourceId, destinationId, transferEvent.GetAmount())
-					if err != nil {
-						return err
-					} else {
-						slog.Debug("Stored qu transfer event.", "id", transferId)
-					}
-				case events.EventTypeAssetOwnershipChange:
-					decodedEvent, err := DecodeAssetOwnershipChangeEvent(eventData)
-					if err != nil {
-						slog.Error("Could not decode event.", "eventType", event.EventType, "eventData", eventData, "error", err)
-						return err
-					}
-					assetChangeEvent := decodedEvent.GetAssetOwnershipChangeEvent()
-					sourceId, err := es.eventRepository.GetOrCreateEntity(assetChangeEvent.GetSourceId())
-					if err != nil {
-						return err
-					}
-					destinationId, err := es.eventRepository.GetOrCreateEntity(assetChangeEvent.GetDestId())
-					if err != nil {
-						return err
-					}
-					assetId, err := es.eventRepository.GetOrCreateAsset(assetChangeEvent.GetIssuerId(), assetChangeEvent.GetAssetName())
-					if err != nil {
-						return err
-					}
-					assetChangeEventId, err := es.eventRepository.GetOrCreateAssetChangeEvent(eventId, assetId, sourceId, destinationId, assetChangeEvent.GetNumberOfShares())
-					if err != nil {
-						return err
-					} else {
-						slog.Debug("Stored asset ownership change event.", "id", assetChangeEventId, "eventType", event.EventType)
-					}
-				case events.EventTypeAssetPossessionChange:
-					decodedEvent, err := DecodeAssetPossessionChangeEvent(eventData)
-					if err != nil {
-						slog.Error("Could not decode event.", "eventType", event.EventType, "eventData", eventData, "error", err)
-						return err
-					}
-					assetChangeEvent := decodedEvent.GetAssetPossessionChangeEvent()
-					sourceId, err := es.eventRepository.GetOrCreateEntity(assetChangeEvent.GetSourceId())
-					if err != nil {
-						return err
-					}
-					destinationId, err := es.eventRepository.GetOrCreateEntity(assetChangeEvent.GetDestId())
-					if err != nil {
-						return err
-					}
-					assetId, err := es.eventRepository.GetOrCreateAsset(assetChangeEvent.GetIssuerId(), assetChangeEvent.GetAssetName())
-					if err != nil {
-						return err
-					}
-					assetChangeEventId, err := es.eventRepository.GetOrCreateAssetChangeEvent(eventId, assetId, sourceId, destinationId, assetChangeEvent.GetNumberOfShares())
-					if err != nil {
-						return err
-					} else {
-						slog.Debug("Stored asset possession change event.", "id", assetChangeEventId, "eventType", event.EventType)
-					}
-				case events.EventTypeAssetIssuance:
-					decodedEvent, err := DecodeAssetIssuanceEvent(eventData)
-					if err != nil {
-						slog.Error("Could not decode event.", "eventType", event.EventType, "eventData", eventData, "error", err)
-						return err
-					}
-					assetIssuanceEvent := decodedEvent.GetAssetIssuanceEvent()
-					assetId, err := es.eventRepository.GetOrCreateAsset(assetIssuanceEvent.GetSourceId(), assetIssuanceEvent.GetAssetName())
-					if err != nil {
-						return err
-					}
-					assetIssuanceEventId, err := es.eventRepository.GetOrCreateAssetIssuanceEvent(eventId, assetId,
-						assetIssuanceEvent.GetNumberOfShares(),
-						assetIssuanceEvent.GetMeasurementUnit(),
-						assetIssuanceEvent.GetNumberOfDecimals())
-					if err != nil {
-						return err
-					} else {
-						slog.Debug("Stored asset issuance event.", "id", assetIssuanceEventId, "eventType", event.EventType)
-					}
-				default:
-					slog.Error("unexpected unhandled event type.",
-						"Transaction", transactionEvents.TxId,
-						"eventType", eventType,
-						"eventData", event.EventData)
-				}
-
-			}
-		}
+		processedTick = endTick
 	}
 	return nil
 }
 
-func getEventId(event *eventspb.Event) (uint64, error) {
-	if event.GetHeader() != nil {
-		return event.Header.EventId, nil
-	} else {
-		slog.Error("Event header not found.", "event", event)
-		return 0, errors.New("No event header found.")
-	}
+func (es *EventService) ProcessTickEvents(from uint64, toExcl uint64) error {
+	for i := from; i < toExcl; i++ {
 
-}
-
-func filterRelevantEvents(events []*eventspb.Event) []*eventspb.Event {
-	var filtered []*eventspb.Event
-	for _, ev := range events {
-		if isRelevantType(ev) {
-			filtered = append(filtered, ev)
+		if i > math.MaxInt32 {
+			return errors.New("uint32 overflow")
 		}
-	}
-	return filtered
-}
 
-func isRelevantType(ev *eventspb.Event) bool {
-	eventType := uint8(ev.EventType)
-	return eventType == events.EventTypeQuTransfer ||
-		eventType == events.EventTypeAssetPossessionChange ||
-		eventType == events.EventTypeAssetOwnershipChange ||
-		eventType == events.EventTypeAssetIssuance
+		tickEvents, err := es.client.GetEvents(uint32(i)) // attention. need to cast here.
+		if err != nil {
+			slog.Error("Error getting events for tick.", "Tick", i)
+			return errors.Wrap(err, "Error getting events for tick.")
+		}
+
+		eventCount, err := es.eventProcessor.ProcessTickEvents(tickEvents)
+		if err != nil {
+			return errors.Wrap(err, "processing tick events.")
+		}
+
+		slog.Info("Processed tick.", "tick", i, "events", eventCount)
+
+	}
+	return nil
+
 }
