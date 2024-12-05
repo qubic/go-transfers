@@ -14,16 +14,19 @@ message TickRequest {
   uint32 tick = 1;
 }
 
-message EntityRequest {
-  string identity = 1;
+message AssetChangeEvents {
+  repeated AssetChangeEvent events = 1;
 }
 
-message AssetTransferResponse {
+// numberOfShares is returned as string via rest - unfortunately only string is possible in grpc for unit64.
+message AssetChangeEvent {
   string sourceId = 1;
   string destinationId = 2;
   string issuerId = 3;
   string name = 4;
   uint64 numberOfShares = 5;
+  string transactionHash = 6;
+  uint32 eventType = 7;
 }
 
 service TransferService {
@@ -34,15 +37,9 @@ service TransferService {
     };
   }
 
-  rpc GetAssetTransfersForTick(TickRequest) returns (AssetTransferResponse) {
+  rpc GetAssetChangeEventsForTick(TickRequest) returns (AssetChangeEvents) {
     option (google.api.http) = {
-      get: "/v1/tick/{tick}/asset-transfers"
-    };
-  }
-
-  rpc GetAssetTransfersForEntity(EntityRequest) returns (AssetTransferResponse) {
-    option (google.api.http) = {
-      get: "/v1/entity/{identity}/asset-transfers"
+      get: "/api/v1/ticks/{tick}/events/asset-change"
     };
   }
 

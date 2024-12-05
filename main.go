@@ -9,8 +9,10 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/pkg/errors"
 	"go-transfers/api"
+	"go-transfers/client"
 	"go-transfers/config"
 	"go-transfers/db"
+	"go-transfers/sync"
 	"log"
 	"log/slog"
 	"os"
@@ -31,21 +33,44 @@ func run() error {
 		return errors.Wrap(err, "loading config")
 	}
 
+	// database
 	err = migrateDatabase(&configuration.Database)
 	if err != nil {
 		return errors.Wrap(err, "migrating database")
 	}
-
-	repository, err := db.NewRepository(&configuration.Database)
+	pgDb, err := db.CreateDatabaseWithConfig(&configuration.Database)
 	if err != nil {
 		return errors.Wrap(err, "opening database")
 	}
-	defer repository.Close()
+	defer pgDb.Close()
+	repository := db.NewRepository(pgDb)
 
-	srv := api.NewServer(configuration.Server.GrpcHost, configuration.Server.HttpHost)
-	err = srv.Start()
+	// event processing
+	eventProcessor := sync.NewEventProcessor(repository)
+	eventClient, err := client.NewIntegrationEventClient(configuration.Client.EventApiUrl, configuration.Client.CoreApiUrl)
 	if err != nil {
-		return errors.Wrap(err, "starting server")
+		return errors.Wrap(err, "creating event client")
+	}
+	eventService, err := sync.NewEventService(eventClient, eventProcessor, repository)
+	if err != nil {
+		return errors.Wrap(err, "creating event service")
+	}
+
+	if configuration.App.SyncEnabled {
+		slog.Info("Starting sync...")
+		go eventService.SyncInLoop()
+	} else {
+		slog.Info("Sync not enabled.")
+	}
+
+	if configuration.App.ApiEnabled {
+		slog.Info("Starting api...")
+		// api
+		srv := api.NewServer(configuration.Server.GrpcHost, configuration.Server.HttpHost, repository)
+		err = srv.Start()
+		if err != nil {
+			return errors.Wrap(err, "starting server")
+		}
 	}
 
 	shutdown := make(chan os.Signal, 1)
@@ -73,6 +98,8 @@ func migrateDatabase(config *config.DatabaseConfig) error {
 		version, dirty, _ := m.Version() // we don't care about error here. we only log info.
 		slog.Info("db migrations applied:", "version", version, "dirty", dirty,
 			"changed", !errors.Is(err, migrate.ErrNoChange))
+		sErr, dErr := m.Close()
+		slog.Info("db migration close", "source-errors", sErr, "db-errors", dErr)
 	}
 	return nil
 }

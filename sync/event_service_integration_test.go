@@ -1,4 +1,4 @@
-package service
+package sync
 
 import (
 	"flag"
@@ -11,7 +11,6 @@ import (
 )
 
 var (
-	repository   Repository
 	eventClient  EventClient
 	eventService *EventService
 )
@@ -41,7 +40,6 @@ func TestMain(m *testing.M) {
 	// Parse args and run
 	flag.Parse()
 	exitCode := m.Run()
-	teardown()
 	// Exit
 	os.Exit(exitCode)
 }
@@ -59,16 +57,18 @@ func setup() {
 		os.Exit(-1)
 	}
 
-	repository, err = db.NewRepository(&c.Database)
+	pgDb, err := db.CreateDatabaseWithConfig(&c.Database)
+	// defer pgDb.Close()
 	if err != nil {
-		slog.Error("error creating repository")
+		slog.Error("error creating database")
 		os.Exit(-1)
 	}
 
+	repository := db.NewRepository(pgDb)
 	eventProcessor := NewEventProcessor(repository)
-	eventService = NewEventService(eventClient, eventProcessor)
-}
-
-func teardown() {
-	repository.Close()
+	eventService, err = NewEventService(eventClient, eventProcessor, repository)
+	if err != nil {
+		slog.Error("error creating event service")
+		os.Exit(-1)
+	}
 }

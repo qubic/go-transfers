@@ -2,16 +2,25 @@ package api
 
 import (
 	"flag"
+	"go-transfers/proto"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"testing"
 )
 
+type FakeRepository struct {
+}
+
+func (f FakeRepository) GetAssetChangeEvents(_ int) ([]*proto.AssetChangeEvent, error) {
+	return []*proto.AssetChangeEvent{}, nil
+}
+
 func TestMain(m *testing.M) {
 
 	// Start server
-	srv := NewServer("0.0.0.0:8000", "0.0.0.0:8001")
+	srv := NewServer("0.0.0.0:8002", "0.0.0.0:8003", &FakeRepository{})
 	err := srv.Start()
 	if err != nil {
 		os.Exit(-1)
@@ -27,7 +36,7 @@ func TestMain(m *testing.M) {
 func TestServer_whenHealth_thenReturnStatusUp(t *testing.T) {
 	httpClient := http.DefaultClient
 
-	response, err := httpClient.Get("http://localhost:8001/status/health")
+	response, err := httpClient.Get("http://localhost:8003/status/health")
 	if err != nil {
 		t.Error(err)
 	}
@@ -49,7 +58,7 @@ func TestServer_whenHealth_thenReturnStatusUp(t *testing.T) {
 
 func TestServer_GetAssetTransfersForTick_thenReturnAssetTransfers(t *testing.T) {
 	httpClient := http.DefaultClient
-	response, err := httpClient.Get("http://localhost:8001/v1/tick/1234/asset-transfers")
+	response, err := httpClient.Get("http://localhost:8003/api/v1/ticks/1234/events/asset-change")
 	if err != nil {
 		t.Error(err)
 	}
@@ -62,10 +71,10 @@ func TestServer_GetAssetTransfersForTick_thenReturnAssetTransfers(t *testing.T) 
 	if err != nil {
 		t.Error(err)
 	}
-
 	if body == nil {
 		t.Error("Response body is nil")
 	}
+	slog.Info("Read body.", "body", body)
 }
 
 func readBody(closer io.ReadCloser) ([]byte, error) {

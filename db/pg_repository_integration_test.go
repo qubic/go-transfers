@@ -299,6 +299,25 @@ func TestPgRepository_GetOrCreateAssetIssuanceEvent_GivenEvent_ThenGet(t *testin
 	deleteEntity(issuerId, t)
 }
 
+func TestPgRepository_GetNumericValue(t *testing.T) {
+	value, err := repository.GetNumericValue("tick")
+	assert.Nil(t, err)
+	assert.True(t, value >= 0)
+}
+
+func TestPgRepository_UpdatedNumericValue(t *testing.T) {
+	original, err := repository.GetNumericValue("tick")
+	assert.Nil(t, err)
+
+	err = repository.UpdateNumericValue("tick", 42)
+	assert.Nil(t, err)
+	updated, err := repository.GetNumericValue("tick")
+	assert.Nil(t, err)
+	assert.Equal(t, 42, updated)
+
+	_ = repository.UpdateNumericValue("tick", original) // clean up
+}
+
 // test data set ups and clean ups
 
 func setupTransactionTestData(t *testing.T) (int, int) {
@@ -407,11 +426,12 @@ func setup() {
 		os.Exit(-1)
 	}
 
-	repository, err = NewRepository(&c.Database)
+	db, err := CreateDatabaseWithConfig(&c.Database)
 	if err != nil {
 		slog.Error("error creating repository")
 		os.Exit(-1)
 	}
+	repository = NewRepository(db)
 }
 
 func teardown() {

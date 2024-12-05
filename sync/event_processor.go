@@ -1,4 +1,4 @@
-package service
+package sync
 
 import (
 	"encoding/base64"
@@ -6,13 +6,27 @@ import (
 	eventspb "github.com/qubic/go-events/proto"
 	"github.com/qubic/go-qubic/sdk/events"
 	"log/slog"
+	"strings"
 )
 
-type EventProcessor struct {
-	repository Repository
+const AAA = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+
+type EventRepository interface {
+	GetOrCreateEntity(identity string) (int, error)
+	GetOrCreateAsset(issuer, name string) (int, error)
+	GetOrCreateTick(tickNumber uint32) (int, error)
+	GetOrCreateTransaction(hash string, tickId int) (int, error)
+	GetOrCreateEvent(transactionId int, eventEventId uint64, eventType uint32, eventData string) (int, error)
+	GetOrCreateQuTransferEvent(eventId int, sourceEntityId int, destinationEntityId int, amount uint64) (int, error)
+	GetOrCreateAssetChangeEvent(eventId, assetId, sourceEntityId, destinationEntityId int, numberOfShares int64) (int, error)
+	GetOrCreateAssetIssuanceEvent(eventId int, assetId int, numberOfShares int64, unitOfMeasurement []byte, numberOfDecimalPlaces uint32) (int, error)
 }
 
-func NewEventProcessor(repository Repository) *EventProcessor {
+type EventProcessor struct {
+	repository EventRepository
+}
+
+func NewEventProcessor(repository EventRepository) *EventProcessor {
 	ep := EventProcessor{
 		repository: repository,
 	}
@@ -28,7 +42,6 @@ func (ep *EventProcessor) ProcessTickEvents(tickEvents *eventspb.TickEvents) (in
 		relevantEvents := filterRelevantEvents(transactionEvents.Events)
 		if len(relevantEvents) > 0 {
 
-			count += len(relevantEvents)
 			slog.Debug("Processing events of transaction.", "hash", transactionEvents.TxId, "count", len(relevantEvents))
 
 			transactionId, err := ep.storeTransaction(tickEvents.GetTick(), transactionEvents.GetTxId())
@@ -44,8 +57,7 @@ func (ep *EventProcessor) ProcessTickEvents(tickEvents *eventspb.TickEvents) (in
 				}
 				eventData, err := base64.StdEncoding.DecodeString(event.EventData)
 				if err != nil {
-					slog.Error("Could not base64 decode event data.", "eventData", event.GetEventData(), "error", err)
-					return -1, errors.Wrap(err, "decoding event data.")
+					return -1, errors.Wrap(err, "base64 decoding event data.")
 				}
 				eventType := uint8(event.EventType)
 				if eventType == events.EventTypeQuTransfer {
@@ -62,11 +74,21 @@ func (ep *EventProcessor) ProcessTickEvents(tickEvents *eventspb.TickEvents) (in
 				if err != nil {
 					slog.Error("Could not process event.", "eventType", event.EventType, "eventData", eventData, "error", err)
 					return -1, errors.Wrap(err, "storing event details")
+				} else {
+					count++
 				}
 			}
 		}
 	}
 	return count, nil
+}
+
+func (ep *EventProcessor) getTransactionId(tickNumber uint32, hash string) (int, error) {
+	transactionId, err := ep.storeTransaction(tickNumber, hash)
+	if err != nil {
+		return -1, errors.Wrap(err, "storing transaction")
+	}
+	return transactionId, nil
 }
 
 func (ep *EventProcessor) storeTransaction(tick uint32, transactionHash string) (int, error) {
@@ -185,6 +207,7 @@ func (ep *EventProcessor) storeQuTransferEvent(eventData []byte, eventId int) er
 		return errors.Wrap(err, "decoding event")
 	}
 	transferEvent := decodedEvent.GetQuTransferEvent()
+
 	sourceId, err := ep.repository.GetOrCreateEntity(transferEvent.GetSourceId())
 	if err != nil {
 		return errors.Wrap(err, "getting source entity")
@@ -193,6 +216,7 @@ func (ep *EventProcessor) storeQuTransferEvent(eventData []byte, eventId int) er
 	if err != nil {
 		return errors.Wrap(err, "getting destination entity")
 	}
+
 	transferId, err := ep.repository.GetOrCreateQuTransferEvent(eventId, sourceId, destinationId, transferEvent.GetAmount())
 	if err != nil {
 		return errors.Wrap(err, "creating qu transfer event")
@@ -205,17 +229,34 @@ func (ep *EventProcessor) storeQuTransferEvent(eventData []byte, eventId int) er
 func filterRelevantEvents(events []*eventspb.Event) []*eventspb.Event {
 	var filtered []*eventspb.Event
 	for _, ev := range events {
-		if isRelevantType(ev) {
+		if isRelevantEvent(ev) {
 			filtered = append(filtered, ev)
 		}
 	}
 	return filtered
 }
 
-func isRelevantType(ev *eventspb.Event) bool {
+func isRelevantEvent(ev *eventspb.Event) bool {
 	eventType := uint8(ev.EventType)
-	return eventType == events.EventTypeQuTransfer ||
-		eventType == events.EventTypeAssetPossessionChange ||
+	// this is a bit awkward. As we don't have the transaction data we need to look into the event data
+	// for checking, if it is relevant. Same decoding will happen once more later. This seems to be easier
+	// than to change the transaction creation logic (we need to persist the transaction first).
+	if eventType == events.EventTypeQuTransfer {
+		eventData, err := base64.StdEncoding.DecodeString(ev.EventData)
+		if err != nil {
+			slog.Error("Error decoding event data", "data", ev.EventData, "error", err)
+			return false
+		}
+		decodedEvent, err := DecodeQuTransferEvent(eventData)
+		if err != nil {
+			slog.Error("Error decoding qu transfer event", "data", ev.EventData, "error", err)
+			return false
+		}
+		transferEvent := decodedEvent.GetQuTransferEvent()
+		// ignore qu transfers that go to AAA or come from AAA (mainly mining deposits but could be burning, too)
+		return !(strings.HasPrefix(transferEvent.GetSourceId(), AAA) || strings.HasPrefix(transferEvent.GetDestId(), AAA))
+	}
+	return eventType == events.EventTypeAssetPossessionChange ||
 		eventType == events.EventTypeAssetOwnershipChange ||
 		eventType == events.EventTypeAssetIssuance
 }

@@ -1,0 +1,1 @@
+delete from key_values where key = 'tick';

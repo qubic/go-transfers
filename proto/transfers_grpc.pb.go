@@ -20,8 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TransferServiceClient interface {
 	Health(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*HealthResponse, error)
-	GetAssetTransfersForTick(ctx context.Context, in *TickRequest, opts ...grpc.CallOption) (*AssetTransferResponse, error)
-	GetAssetTransfersForEntity(ctx context.Context, in *EntityRequest, opts ...grpc.CallOption) (*AssetTransferResponse, error)
+	GetAssetChangeEventsForTick(ctx context.Context, in *TickRequest, opts ...grpc.CallOption) (*AssetChangeEvents, error)
 }
 
 type transferServiceClient struct {
@@ -41,18 +40,9 @@ func (c *transferServiceClient) Health(ctx context.Context, in *emptypb.Empty, o
 	return out, nil
 }
 
-func (c *transferServiceClient) GetAssetTransfersForTick(ctx context.Context, in *TickRequest, opts ...grpc.CallOption) (*AssetTransferResponse, error) {
-	out := new(AssetTransferResponse)
-	err := c.cc.Invoke(ctx, "/qubic.transfers.proto.TransferService/GetAssetTransfersForTick", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *transferServiceClient) GetAssetTransfersForEntity(ctx context.Context, in *EntityRequest, opts ...grpc.CallOption) (*AssetTransferResponse, error) {
-	out := new(AssetTransferResponse)
-	err := c.cc.Invoke(ctx, "/qubic.transfers.proto.TransferService/GetAssetTransfersForEntity", in, out, opts...)
+func (c *transferServiceClient) GetAssetChangeEventsForTick(ctx context.Context, in *TickRequest, opts ...grpc.CallOption) (*AssetChangeEvents, error) {
+	out := new(AssetChangeEvents)
+	err := c.cc.Invoke(ctx, "/qubic.transfers.proto.TransferService/GetAssetChangeEventsForTick", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -64,8 +54,7 @@ func (c *transferServiceClient) GetAssetTransfersForEntity(ctx context.Context, 
 // for forward compatibility
 type TransferServiceServer interface {
 	Health(context.Context, *emptypb.Empty) (*HealthResponse, error)
-	GetAssetTransfersForTick(context.Context, *TickRequest) (*AssetTransferResponse, error)
-	GetAssetTransfersForEntity(context.Context, *EntityRequest) (*AssetTransferResponse, error)
+	GetAssetChangeEventsForTick(context.Context, *TickRequest) (*AssetChangeEvents, error)
 	mustEmbedUnimplementedTransferServiceServer()
 }
 
@@ -76,11 +65,8 @@ type UnimplementedTransferServiceServer struct {
 func (UnimplementedTransferServiceServer) Health(context.Context, *emptypb.Empty) (*HealthResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Health not implemented")
 }
-func (UnimplementedTransferServiceServer) GetAssetTransfersForTick(context.Context, *TickRequest) (*AssetTransferResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAssetTransfersForTick not implemented")
-}
-func (UnimplementedTransferServiceServer) GetAssetTransfersForEntity(context.Context, *EntityRequest) (*AssetTransferResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAssetTransfersForEntity not implemented")
+func (UnimplementedTransferServiceServer) GetAssetChangeEventsForTick(context.Context, *TickRequest) (*AssetChangeEvents, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAssetChangeEventsForTick not implemented")
 }
 func (UnimplementedTransferServiceServer) mustEmbedUnimplementedTransferServiceServer() {}
 
@@ -113,38 +99,20 @@ func _TransferService_Health_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TransferService_GetAssetTransfersForTick_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _TransferService_GetAssetChangeEventsForTick_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TickRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TransferServiceServer).GetAssetTransfersForTick(ctx, in)
+		return srv.(TransferServiceServer).GetAssetChangeEventsForTick(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/qubic.transfers.proto.TransferService/GetAssetTransfersForTick",
+		FullMethod: "/qubic.transfers.proto.TransferService/GetAssetChangeEventsForTick",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TransferServiceServer).GetAssetTransfersForTick(ctx, req.(*TickRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TransferService_GetAssetTransfersForEntity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(EntityRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TransferServiceServer).GetAssetTransfersForEntity(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/qubic.transfers.proto.TransferService/GetAssetTransfersForEntity",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TransferServiceServer).GetAssetTransfersForEntity(ctx, req.(*EntityRequest))
+		return srv.(TransferServiceServer).GetAssetChangeEventsForTick(ctx, req.(*TickRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -161,12 +129,8 @@ var TransferService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _TransferService_Health_Handler,
 		},
 		{
-			MethodName: "GetAssetTransfersForTick",
-			Handler:    _TransferService_GetAssetTransfersForTick_Handler,
-		},
-		{
-			MethodName: "GetAssetTransfersForEntity",
-			Handler:    _TransferService_GetAssetTransfersForEntity_Handler,
+			MethodName: "GetAssetChangeEventsForTick",
+			Handler:    _TransferService_GetAssetChangeEventsForTick_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

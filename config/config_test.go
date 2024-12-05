@@ -32,6 +32,10 @@ func TestConfig_GetConfig(t *testing.T) {
 			MaxIdle: 10,
 			MaxOpen: 10,
 		},
+		App: AppConfig{
+			SyncEnabled: true,
+			ApiEnabled:  true,
+		},
 	}
 
 	if *config != expected {

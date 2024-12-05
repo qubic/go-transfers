@@ -2,11 +2,14 @@ package api
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go-transfers/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"log"
@@ -19,13 +22,19 @@ type Server struct {
 	proto.UnimplementedTransferServiceServer
 	listenAddrGRPC string
 	listenAddrHTTP string
+	repository     Repository
 }
 
-func NewServer(grpcAdders, httpAddress string) *Server {
+type Repository interface {
+	GetAssetChangeEvents(tickNumber int) ([]*proto.AssetChangeEvent, error)
+}
+
+func NewServer(grpcAdders, httpAddress string, repository Repository) *Server {
 
 	return &Server{
 		listenAddrGRPC: grpcAdders,
 		listenAddrHTTP: httpAddress,
+		repository:     repository,
 	}
 
 }
@@ -36,10 +45,16 @@ func (s *Server) Health(_ context.Context, _ *emptypb.Empty) (*proto.HealthRespo
 	}, nil
 }
 
-func (s *Server) GetAssetTransfersForTick(_ context.Context, request *proto.TickRequest) (*proto.AssetTransferResponse, error) {
+func (s *Server) GetAssetChangeEventsForTick(_ context.Context, request *proto.TickRequest) (*proto.AssetChangeEvents, error) {
 	tickNumber := request.GetTick()
+	events, err := s.repository.GetAssetChangeEvents(int(tickNumber))
+	if err != nil {
+		errorId := uuid.New()
+		slog.Error("Error getting ownership change events.", "uuid", errorId.String(), "tickNumber", tickNumber, "error", err)
+		return nil, status.Errorf(codes.Internal, "retrieving events. [%v]", errorId)
+	}
 	slog.Debug("Get asset transfers for tick.", "tick number", tickNumber)
-	return &proto.AssetTransferResponse{}, nil
+	return &proto.AssetChangeEvents{Events: events}, nil
 }
 
 func (s *Server) Start() error {

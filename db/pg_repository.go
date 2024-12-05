@@ -7,6 +7,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 	"go-transfers/config"
+	"go-transfers/proto"
 	"log/slog"
 )
 
@@ -14,17 +15,52 @@ type PgRepository struct {
 	db *sqlx.DB
 }
 
-func NewRepository(c *config.DatabaseConfig) (*PgRepository, error) {
-	connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s",
-		c.Host, c.Port, c.User, c.Pass, c.Name)
-	db, err := createDatabase(connectionString)
+func NewRepository(db *sqlx.DB) *PgRepository {
+	repo := PgRepository{db: db}
+	return &repo
+}
+
+// asset change events
+
+func (r *PgRepository) GetAssetChangeEvents(tickNumber int) ([]*proto.AssetChangeEvent, error) {
+	selectSql := `select src.identity sourceId, 
+       		dst.identity destinationId, 
+       		issuer.identity issuerId,
+       		a.name, 
+       		ev.number_of_shares numberOfShares,
+       		tx.hash transactionHash,
+       		e.event_type eventType
+		from asset_change_events ev
+		join events e on ev.event_id = e.id
+		join transactions tx on e.transaction_id = tx.id
+		join ticks ti on tx.tick_id = ti.id
+		join assets a on ev.asset_id = a.id
+		join entities issuer on a.issuer_id = issuer.id
+		join entities src on ev.source_entity_id = src.id
+		join entities dst on ev.destination_entity_id = dst.id
+		where ti.tick_number = $1 
+		and e.event_type in (2, 3);`
+	events := []*proto.AssetChangeEvent{}
+	err := r.db.Select(&events, selectSql, tickNumber)
 	if err != nil {
-		return nil, err
-	} else {
-		db.SetMaxOpenConns(c.MaxOpen)
-		db.SetMaxIdleConns(c.MaxIdle)
-		return &PgRepository{db: db}, nil
+		return nil, errors.Wrap(err, "getting asset change events")
 	}
+	return events, nil
+}
+
+// key value
+
+func (r *PgRepository) GetNumericValue(key string) (int, error) {
+	selectSql := `select numeric_value from key_values where key = $1`
+	var value int
+	err := r.db.Get(&value, selectSql, key)
+	return value, errors.Wrap(err, "getting numeric value")
+}
+
+func (r *PgRepository) UpdateNumericValue(key string, value int) error {
+	updateSql := `update key_values set numeric_value = $1 where key = $2`
+	_, err := r.db.Exec(updateSql, value, key)
+	return errors.Wrap(err, "updating numeric value")
 }
 
 // entity
@@ -34,7 +70,7 @@ func (r *PgRepository) GetOrCreateEntity(identity string) (int, error) {
 	if errors.Is(err, sql.ErrNoRows) { // insert if not found
 		id, err = r.insertEntity(identity)
 	}
-	return id, err
+	return id, errors.Wrap(err, "getting or creating entity")
 }
 
 func (r *PgRepository) insertEntity(identity string) (int, error) {
@@ -54,14 +90,14 @@ func (r *PgRepository) GetOrCreateAsset(issuer, name string) (int, error) {
 	if errors.Is(err, sql.ErrNoRows) { // not found create
 		return r.createAsset(issuer, name)
 	} else {
-		return id, err
+		return id, errors.Wrap(err, "getting or creating asset")
 	}
 }
 
 func (r *PgRepository) createAsset(issuer, name string) (int, error) {
 	entityId, err := r.GetOrCreateEntity(issuer)
 	if err != nil {
-		return 0, err
+		return 0, errors.Wrap(err, "creating asset")
 	}
 	return r.insertAsset(entityId, name)
 }
@@ -86,7 +122,7 @@ func (r *PgRepository) GetOrCreateTick(tickNumber uint32) (int, error) {
 	if errors.Is(err, sql.ErrNoRows) {
 		id, err = r.insertTick(tickNumber)
 	}
-	return id, err
+	return id, errors.Wrap(err, "getting or creating tick")
 }
 
 func (r *PgRepository) getTickId(tickNumber uint32) (int, error) {
@@ -106,7 +142,7 @@ func (r *PgRepository) GetOrCreateTransaction(hash string, tickId int) (int, err
 	if errors.Is(err, sql.ErrNoRows) {
 		id, err = r.insertTransaction(hash, tickId)
 	}
-	return id, err
+	return id, errors.Wrap(err, "getting or creating transaction")
 }
 
 func (r *PgRepository) getTransactionId(hash string, tickId int) (int, error) {
@@ -126,7 +162,7 @@ func (r *PgRepository) GetOrCreateEvent(transactionId int, eventEventId uint64, 
 	if errors.Is(err, sql.ErrNoRows) {
 		id, err = r.insertEvent(transactionId, eventEventId, eventType, eventData)
 	}
-	return id, err
+	return id, errors.Wrap(err, "getting or creating event")
 }
 
 func (r *PgRepository) insertEvent(transactionId int, eventEventId uint64, eventType uint32, eventData string) (int, error) {
@@ -146,7 +182,7 @@ func (r *PgRepository) GetOrCreateQuTransferEvent(eventId int, sourceEntityId in
 	if errors.Is(err, sql.ErrNoRows) {
 		id, err = r.insertQuTransferEvent(eventId, sourceEntityId, destinationEntityId, amount)
 	}
-	return id, err
+	return id, errors.Wrap(err, "getting or creating qu transfer event")
 }
 
 func (r *PgRepository) insertQuTransferEvent(eventId int, sourceEntityId int, destinationEntityId int, amount uint64) (int, error) {
@@ -166,7 +202,7 @@ func (r *PgRepository) GetOrCreateAssetChangeEvent(eventId, assetId, sourceEntit
 	if errors.Is(err, sql.ErrNoRows) {
 		id, err = r.insertAssetChangeEvent(eventId, assetId, sourceEntityId, destinationEntityId, numberOfShares)
 	}
-	return id, err
+	return id, errors.Wrap(err, "getting or creating asset change event")
 }
 
 func (r *PgRepository) insertAssetChangeEvent(eventId, assetId, sourceEntityId, destinationEntityId int, numberOfShares int64) (int, error) {
@@ -186,7 +222,7 @@ func (r *PgRepository) GetOrCreateAssetIssuanceEvent(eventId int, assetId int, n
 	if errors.Is(err, sql.ErrNoRows) {
 		id, err = r.insertAssetIssuanceEvent(eventId, assetId, numberOfShares, unitOfMeasurement, numberOfDecimalPlaces)
 	}
-	return id, err
+	return id, errors.Wrap(err, "getting or creating asset issuance event")
 }
 
 func (r *PgRepository) insertAssetIssuanceEvent(eventId int, assetId int, numberOfShares int64, unitOfMeasurement []byte, numberOfDecimalPlaces uint32) (int, error) {
@@ -213,24 +249,6 @@ func insert(db *sqlx.DB, statement string, args ...interface{}) (int, error) {
 	return id, err
 }
 
-func createDatabase(connectionString string) (*sqlx.DB, error) {
-
-	// open database
-	db, err := sqlx.Connect("postgres", connectionString)
-	if err != nil {
-		return nil, err
-	}
-
-	// check db
-	err = db.Ping()
-	if err != nil {
-		return db, err
-	}
-
-	slog.Info("Connected to database!")
-	return db, nil
-}
-
 func (r *PgRepository) Close() {
 	err := r.db.Close()
 	if err != nil {
@@ -238,4 +256,17 @@ func (r *PgRepository) Close() {
 	} else {
 		slog.Info("closed database.")
 	}
+}
+
+func CreateDatabaseWithConfig(c *config.DatabaseConfig) (*sqlx.DB, error) {
+	connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s",
+		c.Host, c.Port, c.User, c.Pass, c.Name)
+	pgDb, err := sqlx.Connect("postgres", connectionString)
+	if err != nil {
+		return nil, err
+	}
+	pgDb.SetMaxOpenConns(c.MaxOpen)
+	pgDb.SetMaxIdleConns(c.MaxIdle)
+	slog.Info("Connected to database!")
+	return pgDb, nil
 }

@@ -33,7 +33,13 @@ type DatabaseConfig struct {
 	MaxOpen int
 }
 
+type AppConfig struct {
+	SyncEnabled bool
+	ApiEnabled  bool
+}
+
 type Config struct {
+	App      AppConfig
 	Server   ServerConfig
 	Client   ClientConfig
 	Database DatabaseConfig

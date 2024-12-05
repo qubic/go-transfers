@@ -1,0 +1,1 @@
+insert into key_values(key, numeric_value) VALUES ('tick', 0); -- last processed tick

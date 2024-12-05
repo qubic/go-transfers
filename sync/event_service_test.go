@@ -1,10 +1,18 @@
-package service
+package sync
 
 import (
 	eventspb "github.com/qubic/go-events/proto"
+	"github.com/stretchr/testify/assert"
 	"go-transfers/client"
+	"log/slog"
 	"math/rand/v2"
 	"testing"
+)
+
+var (
+	processedTestTick      int = 0
+	availableTestTick      int = 0
+	storedQuTransferEvents int = 0
 )
 
 type FakeEventClient struct {
@@ -16,7 +24,7 @@ func NewFakeEventClient(tickEvents map[uint32]*eventspb.TickEvents) (*FakeEventC
 }
 
 func (eventClient *FakeEventClient) GetStatus() (*client.EventStatus, error) {
-	return &client.EventStatus{}, nil
+	return &client.EventStatus{AvailableTick: uint32(availableTestTick)}, nil
 }
 
 func (eventClient *FakeEventClient) GetEvents(tickNumber uint32) (*eventspb.TickEvents, error) {
@@ -24,10 +32,19 @@ func (eventClient *FakeEventClient) GetEvents(tickNumber uint32) (*eventspb.Tick
 }
 
 func (eventClient *FakeEventClient) GetTickInfo() (*client.TickInfo, error) {
-	return &client.TickInfo{}, nil
+	return &client.TickInfo{CurrentTick: uint32(availableTestTick)}, nil
 }
 
 type FakeRepository struct {
+}
+
+func (f FakeRepository) GetNumericValue(_ string) (int, error) {
+	return processedTestTick, nil
+}
+
+func (f FakeRepository) UpdateNumericValue(_ string, value int) error {
+	processedTestTick = value
+	return nil
 }
 
 func (f FakeRepository) GetOrCreateAssetIssuanceEvent(_ int, _ int, _ int64, _ []byte, _ uint32) (int, error) {
@@ -47,6 +64,7 @@ func (f FakeRepository) GetOrCreateEntity(_ string) (int, error) {
 }
 
 func (f FakeRepository) GetOrCreateQuTransferEvent(_ int, _ int, _ int, _ uint64) (int, error) {
+	storedQuTransferEvents++
 	return rand.IntN(1000), nil
 }
 
@@ -62,12 +80,9 @@ func (f FakeRepository) GetOrCreateTick(_ uint32) (int, error) {
 	return rand.IntN(1000), nil
 }
 
-func (f FakeRepository) Close() {
-}
-
 //goland:noinspection SpellCheckingInspection
 func TestEventService_ProcessTickEvents(t *testing.T) {
-	// slog.SetLogLoggerLevel(slog.LevelDebug)
+	slog.SetLogLoggerLevel(slog.LevelDebug)
 
 	event := event(0, "sMmo18V9WMO9LstUtxvWC2ZfJc2/FZWKEUdAKOqNKDIBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBCDwAAAAAA", &eventspb.Event_Header{EventId: rand.Uint64N(1000000)})
 
@@ -90,17 +105,27 @@ func TestEventService_ProcessTickEvents(t *testing.T) {
 		t.Error(err)
 	}
 
+	fakeRepo := &FakeRepository{}
+
 	eventProcessor := EventProcessor{
-		repository: &FakeRepository{},
+		repository: fakeRepo,
 	}
 
-	eventService := NewEventService(fakeEventClient, &eventProcessor)
-	err = eventService.ProcessTickEvents(123, 126)
+	processedTestTick = 122
+	availableTestTick = 125
+	eventService, err := NewEventService(fakeEventClient, &eventProcessor, fakeRepo)
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = eventService.sync()
+	//err = eventService.ProcessTickEvents(123, 126)
 	if err != nil {
 		t.Error(err)
 	}
 
 	// TODO verify processing
+	assert.Equal(t, 4, storedQuTransferEvents)
 
 }
 
