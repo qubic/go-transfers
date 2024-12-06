@@ -119,13 +119,12 @@ func TestEventService_ProcessTickEvents(t *testing.T) {
 	}
 
 	err = eventService.sync()
-	//err = eventService.ProcessTickEvents(123, 126)
 	if err != nil {
 		t.Error(err)
 	}
 
-	// TODO verify processing
 	assert.Equal(t, 4, storedQuTransferEvents)
+	assert.Equal(t, 125, processedTestTick)
 
 }
 

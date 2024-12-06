@@ -327,7 +327,7 @@ func TestPgRepository_UpdatedNumericValue(t *testing.T) {
 	_ = repository.UpdateLatestTick(original) // clean up
 }
 
-func TestPgRepository_GetAssetChangeEvents(t *testing.T) {
+func TestPgRepository_GetAssetChangeEventsForTick(t *testing.T) {
 	tickId, transactionId, eventId := setupEventTestData(t, 2)
 	sourceEntityId, destinationEntityId := setupSourceAndDestinationEntity(t)
 	assetId, err := repository.getAssetId(AAA, "QX") // don't clean up
@@ -335,7 +335,7 @@ func TestPgRepository_GetAssetChangeEvents(t *testing.T) {
 	assetEventId, err := repository.insertAssetChangeEvent(eventId, assetId, sourceEntityId, destinationEntityId, 123456789)
 	assert.Nil(t, err)
 
-	events, err := repository.GetAssetChangeEvents(testTickNumber)
+	events, err := repository.GetAssetChangeEventsForTick(testTickNumber)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(events))
 	assert.Equal(t, &proto.AssetChangeEvent{
@@ -345,6 +345,7 @@ func TestPgRepository_GetAssetChangeEvents(t *testing.T) {
 		Name:            "QX",
 		NumberOfShares:  123456789,
 		TransactionHash: testTransactionHash,
+		Tick:            testTickNumber,
 		EventType:       2,
 	}, events[0])
 
@@ -354,25 +355,107 @@ func TestPgRepository_GetAssetChangeEvents(t *testing.T) {
 	deleteEntity(destinationEntityId, t)
 }
 
-func TestPgRepository_GetQuTransferEvents(t *testing.T) {
+func TestPgRepository_GetQuTransferEventsForTick(t *testing.T) {
 	tickId, transactionId, eventId := setupEventTestData(t, 0)
 	sourceEntityId, destinationEntityId := setupSourceAndDestinationEntity(t)
 
 	transferId, err := repository.GetOrCreateQuTransferEvent(eventId, sourceEntityId, destinationEntityId, 123_456_789_012_345)
 	assert.Nil(t, err)
 
-	events, err := repository.GetQuTransferEvents(testTickNumber)
+	events, err := repository.GetQuTransferEventsForTick(testTickNumber)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(events))
 	assert.Equal(t, &proto.QuTransferEvent{
-		SourceId:      testSourceIdentity,
-		DestinationId: testDestinationEntity,
-		Amount:        123_456_789_012_345,
-		EventType:     0,
+		SourceId:        testSourceIdentity,
+		DestinationId:   testDestinationEntity,
+		Amount:          123_456_789_012_345,
+		TransactionHash: testTransactionHash,
+		Tick:            testTickNumber,
+		EventType:       0,
 	}, events[0])
 
 	// clean up
 	deleteTransferQuEvent(transferId, t)
+	cleanupEventTestData(t, transactionId, tickId, eventId)
+	deleteEntity(sourceEntityId, t)
+	deleteEntity(destinationEntityId, t)
+}
+
+func TestPgRepository_GetQuTransferEventsForEntity(t *testing.T) {
+	tickId, transactionId, eventId := setupEventTestData(t, 0)
+	sourceEntityId, destinationEntityId := setupSourceAndDestinationEntity(t)
+
+	transferId, err := repository.GetOrCreateQuTransferEvent(eventId, sourceEntityId, destinationEntityId, 123_456_789_012_345)
+	assert.Nil(t, err)
+
+	events, err := repository.GetQuTransferEventsForEntity(testSourceIdentity)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(events))
+	assert.Equal(t, &proto.QuTransferEvent{
+		SourceId:        testSourceIdentity,
+		DestinationId:   testDestinationEntity,
+		Amount:          123_456_789_012_345,
+		TransactionHash: testTransactionHash,
+		Tick:            testTickNumber,
+		EventType:       0,
+	}, events[0])
+
+	events, err = repository.GetQuTransferEventsForEntity(testDestinationEntity)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(events))
+	assert.Equal(t, &proto.QuTransferEvent{
+		SourceId:        testSourceIdentity,
+		DestinationId:   testDestinationEntity,
+		Amount:          123_456_789_012_345,
+		TransactionHash: testTransactionHash,
+		Tick:            testTickNumber,
+		EventType:       0,
+	}, events[0])
+
+	// clean up
+	deleteTransferQuEvent(transferId, t)
+	cleanupEventTestData(t, transactionId, tickId, eventId)
+	deleteEntity(sourceEntityId, t)
+	deleteEntity(destinationEntityId, t)
+}
+
+func TestPgRepository_GetAssetChangeEventsForEntity(t *testing.T) {
+	tickId, transactionId, eventId := setupEventTestData(t, 2)
+	sourceEntityId, destinationEntityId := setupSourceAndDestinationEntity(t)
+	assetId, err := repository.getAssetId(AAA, "QX") // don't clean up
+	assert.Nil(t, err)
+	assetEventId, err := repository.insertAssetChangeEvent(eventId, assetId, sourceEntityId, destinationEntityId, 123456789)
+	assert.Nil(t, err)
+
+	events, err := repository.GetAssetChangeEventsForEntity(testSourceIdentity)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(events))
+	assert.Equal(t, &proto.AssetChangeEvent{
+		SourceId:        testSourceIdentity,
+		DestinationId:   testDestinationEntity,
+		IssuerId:        AAA,
+		Name:            "QX",
+		NumberOfShares:  123456789,
+		TransactionHash: testTransactionHash,
+		Tick:            testTickNumber,
+		EventType:       2,
+	}, events[0])
+
+	events, err = repository.GetAssetChangeEventsForEntity(testDestinationEntity)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(events))
+	assert.Equal(t, &proto.AssetChangeEvent{
+		SourceId:        testSourceIdentity,
+		DestinationId:   testDestinationEntity,
+		IssuerId:        AAA,
+		Name:            "QX",
+		NumberOfShares:  123456789,
+		TransactionHash: testTransactionHash,
+		Tick:            testTickNumber,
+		EventType:       2,
+	}, events[0])
+
+	deleteAssetChangeEvent(assetEventId, t)
 	cleanupEventTestData(t, transactionId, tickId, eventId)
 	deleteEntity(sourceEntityId, t)
 	deleteEntity(destinationEntityId, t)

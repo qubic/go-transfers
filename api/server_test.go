@@ -13,16 +13,24 @@ import (
 type FakeRepository struct {
 }
 
-func (f FakeRepository) GetQuTransferEvents(_ int) ([]*proto.QuTransferEvent, error) {
+func (f FakeRepository) GetAssetChangeEventsForEntity(_ string) ([]*proto.AssetChangeEvent, error) {
+	return []*proto.AssetChangeEvent{}, nil
+}
+
+func (f FakeRepository) GetQuTransferEventsForEntity(_ string) ([]*proto.QuTransferEvent, error) {
+	return []*proto.QuTransferEvent{}, nil
+}
+
+func (f FakeRepository) GetAssetChangeEventsForTick(_ int) ([]*proto.AssetChangeEvent, error) {
+	return []*proto.AssetChangeEvent{}, nil
+}
+
+func (f FakeRepository) GetQuTransferEventsForTick(_ int) ([]*proto.QuTransferEvent, error) {
 	return []*proto.QuTransferEvent{}, nil
 }
 
 func (f FakeRepository) GetLatestTick() (int, error) {
 	return 123, nil
-}
-
-func (f FakeRepository) GetAssetChangeEvents(_ int) ([]*proto.AssetChangeEvent, error) {
-	return []*proto.AssetChangeEvent{}, nil
 }
 
 func TestMain(m *testing.M) {
@@ -65,16 +73,30 @@ func TestServer_whenHealth_thenReturnStatusUp(t *testing.T) {
 }
 
 func TestServer_GetAssetTransfersForTick_thenReturnAssetTransfers(t *testing.T) {
+	callServiceVerifyNoError(t, "http://localhost:8003/api/v1/ticks/1234/events/asset-transfer")
+}
+
+func TestServer_GetQuTransfersForTick_thenStatusOk(t *testing.T) {
+	callServiceVerifyNoError(t, "http://localhost:8003/api/v1/ticks/1234/events/qu-transfer")
+}
+
+func TestServer_GetAssetTransfersForEntity_thenReturnAssetTransfers(t *testing.T) {
+	callServiceVerifyNoError(t, "http://localhost:8003/api/v1/entities/BLAH/events/asset-transfer")
+}
+
+func TestServer_GetQuTransfersForEntity_thenStatusOk(t *testing.T) {
+	callServiceVerifyNoError(t, "http://localhost:8003/api/v1/entities/BLAH/events/qu-transfer")
+}
+
+func callServiceVerifyNoError(t *testing.T, url string) {
 	httpClient := http.DefaultClient
-	response, err := httpClient.Get("http://localhost:8003/api/v1/ticks/1234/events/asset-change")
+	response, err := httpClient.Get(url)
 	if err != nil {
 		t.Error(err)
 	}
-
 	if response.StatusCode != 200 {
 		t.Errorf("Unexpected response status: [%s]", response.Status)
 	}
-
 	body, err := readBody(response.Body)
 	if err != nil {
 		t.Error(err)

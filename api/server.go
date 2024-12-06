@@ -27,8 +27,10 @@ type Server struct {
 
 type Repository interface {
 	GetLatestTick() (int, error)
-	GetAssetChangeEvents(tickNumber int) ([]*proto.AssetChangeEvent, error)
-	GetQuTransferEvents(tickNumber int) ([]*proto.QuTransferEvent, error)
+	GetAssetChangeEventsForTick(tickNumber int) ([]*proto.AssetChangeEvent, error)
+	GetQuTransferEventsForTick(tickNumber int) ([]*proto.QuTransferEvent, error)
+	GetQuTransferEventsForEntity(identity string) ([]*proto.QuTransferEvent, error)
+	GetAssetChangeEventsForEntity(identity string) ([]*proto.AssetChangeEvent, error)
 }
 
 func NewServer(grpcAdders, httpAddress string, repository Repository) *Server {
@@ -54,14 +56,14 @@ func (s *Server) GetAssetChangeEventsForTick(_ context.Context, request *proto.T
 		return nil, err
 	}
 	slog.Debug("Get asset transfers:", "tick", tickNumber, "latest", latestTick)
-	events, err := s.repository.GetAssetChangeEvents(int(tickNumber))
+	events, err := s.repository.GetAssetChangeEventsForTick(int(tickNumber))
 	if err != nil {
 		errorId := uuid.New()
 		slog.Error("getting ownership change events", "uuid", errorId.String(), "tickNumber", tickNumber, "error", err)
 		return nil, status.Errorf(codes.Internal, "error retrieving events [%v]", errorId)
 	}
 
-	response := proto.AssetChangeEventsResponse{Tick: tickNumber, LatestTick: uint32(latestTick), Events: events}
+	response := proto.AssetChangeEventsResponse{LatestTick: uint32(latestTick), Events: events}
 	return &response, nil
 }
 
@@ -71,14 +73,53 @@ func (s *Server) GetQuTransferEventsForTick(_ context.Context, request *proto.Ti
 	if err != nil {
 		return nil, err
 	}
-	events, err := s.repository.GetQuTransferEvents(int(tickNumber))
+	slog.Debug("Get qu transfers:", "tick", tickNumber, "latest", latestTick)
+	events, err := s.repository.GetQuTransferEventsForTick(int(tickNumber))
 	if err != nil {
 		errorId := uuid.New()
 		slog.Error("getting qu transfer events", "uuid", errorId.String(), "tickNumber", tickNumber, "error", err)
 		return nil, status.Errorf(codes.Internal, "error retrieving events [%v]", errorId)
 	}
-	slog.Debug("Get qu transfers:", "tick", tickNumber, "latest", latestTick)
-	response := proto.QuTransferEventsResponse{Tick: tickNumber, LatestTick: uint32(latestTick), Events: events}
+
+	response := proto.QuTransferEventsResponse{LatestTick: uint32(latestTick), Events: events}
+	return &response, nil
+}
+
+func (s *Server) GetAssetChangeEventsForEntity(_ context.Context, request *proto.EntityRequest) (*proto.AssetChangeEventsResponse, error) {
+	identity := request.GetIdentity()
+	latestTick, err := s.getLatestTick()
+	if err != nil {
+		return nil, err
+	}
+	slog.Debug("Get asset transfers:", "entity", identity, "latest", latestTick)
+
+	events, err := s.repository.GetAssetChangeEventsForEntity(identity)
+	if err != nil {
+		errorId := uuid.New()
+		slog.Error("getting qu transfer events", "uuid", errorId.String(), "identity", identity, "error", err)
+		return nil, status.Errorf(codes.Internal, "error retrieving events [%v]", errorId)
+	}
+
+	response := proto.AssetChangeEventsResponse{LatestTick: uint32(latestTick), Events: events}
+	return &response, nil
+}
+
+func (s *Server) GetQuTransferEventsForEntity(_ context.Context, request *proto.EntityRequest) (*proto.QuTransferEventsResponse, error) {
+	identity := request.GetIdentity()
+	latestTick, err := s.getLatestTick()
+	if err != nil {
+		return nil, err
+	}
+	slog.Debug("Get qu transfers:", "entity", identity, "latest", latestTick)
+
+	events, err := s.repository.GetQuTransferEventsForEntity(identity)
+	if err != nil {
+		errorId := uuid.New()
+		slog.Error("getting qu transfer events", "uuid", errorId.String(), "identity", identity, "error", err)
+		return nil, status.Errorf(codes.Internal, "error retrieving events [%v]", errorId)
+	}
+
+	response := proto.QuTransferEventsResponse{LatestTick: uint32(latestTick), Events: events}
 	return &response, nil
 }
 

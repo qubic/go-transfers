@@ -22,7 +22,7 @@ func TestEventService_GetEventRange(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	assert.Equal(t, 17603770, tick)
+	assert.Equal(t, 17603769, tick)
 
 }
 

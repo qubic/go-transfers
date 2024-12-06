@@ -73,21 +73,23 @@ func (es *EventService) sync() error {
 	slog.Debug("Status:", "processed", processedTick, "current", tickInfo.CurrentTick, "available", status.AvailableTick)
 	if startTick <= endTick { // ok
 		slog.Debug("Syncing:", "from", startTick, "to", endTick)
-		tick, err := es.ProcessTickEvents(startTick, endTick+1)
+		tick, err := es.ProcessTickEvents(startTick, endTick+1) // end tick exclusive
 		if err != nil {
 			return errors.Wrap(err, "processing tick events")
 		}
-		err = es.repository.UpdateLatestTick(tick)
-		if err != nil {
-			return errors.Wrap(err, "updating processed tick")
+		if tick > 0 {
+			err := es.repository.UpdateLatestTick(tick)
+			if err != nil {
+				return errors.Wrap(err, "updating processed tick")
+			}
 		}
 	}
 	return nil
 }
 
-func (es *EventService) ProcessTickEvents(from int, toExcl int) (int, error) {
-	tick := from
-	for ; tick < toExcl; tick++ {
+func (es *EventService) ProcessTickEvents(from, toExcl int) (int, error) {
+	processed := -1
+	for tick := from; tick < toExcl; tick++ {
 
 		if tick > math.MaxInt32 {
 			return -1, errors.New("uint32 overflow")
@@ -105,6 +107,7 @@ func (es *EventService) ProcessTickEvents(from int, toExcl int) (int, error) {
 		}
 
 		slog.Info("Processed:", "tick", tick, "events", eventCount)
+		processed = tick
 	}
-	return tick, nil
+	return processed, nil
 }
