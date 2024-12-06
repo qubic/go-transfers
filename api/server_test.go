@@ -13,6 +13,10 @@ import (
 type FakeRepository struct {
 }
 
+func (f FakeRepository) GetQuTransferEvents(_ int) ([]*proto.QuTransferEvent, error) {
+	return []*proto.QuTransferEvent{}, nil
+}
+
 func (f FakeRepository) GetLatestTick() (int, error) {
 	return 123, nil
 }

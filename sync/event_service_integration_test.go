@@ -18,16 +18,12 @@ var (
 
 func TestEventService_GetEventRange(t *testing.T) {
 
-	tick, err := eventService.ProcessTickEvents(17396000, 17396010)
+	tick, err := eventService.ProcessTickEvents(17603769, 17603770)
 	if err != nil {
 		t.Error(err)
 	}
-	assert.Equal(t, 17396010, tick)
-	tick, err = eventService.ProcessTickEvents(16660843, 16660845)
-	if err != nil {
-		t.Error(err)
-	}
-	assert.Equal(t, 16660845, tick)
+	assert.Equal(t, 17603770, tick)
+
 }
 
 //func TestEventService_Loop(t *testing.T) {

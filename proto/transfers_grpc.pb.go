@@ -20,7 +20,8 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TransferServiceClient interface {
 	Health(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*HealthResponse, error)
-	GetAssetChangeEventsForTick(ctx context.Context, in *TickRequest, opts ...grpc.CallOption) (*AssetChangeEventResponse, error)
+	GetAssetChangeEventsForTick(ctx context.Context, in *TickRequest, opts ...grpc.CallOption) (*AssetChangeEventsResponse, error)
+	GetQuTransferEventsForTick(ctx context.Context, in *TickRequest, opts ...grpc.CallOption) (*QuTransferEventsResponse, error)
 }
 
 type transferServiceClient struct {
@@ -40,9 +41,18 @@ func (c *transferServiceClient) Health(ctx context.Context, in *emptypb.Empty, o
 	return out, nil
 }
 
-func (c *transferServiceClient) GetAssetChangeEventsForTick(ctx context.Context, in *TickRequest, opts ...grpc.CallOption) (*AssetChangeEventResponse, error) {
-	out := new(AssetChangeEventResponse)
+func (c *transferServiceClient) GetAssetChangeEventsForTick(ctx context.Context, in *TickRequest, opts ...grpc.CallOption) (*AssetChangeEventsResponse, error) {
+	out := new(AssetChangeEventsResponse)
 	err := c.cc.Invoke(ctx, "/qubic.transfers.proto.TransferService/GetAssetChangeEventsForTick", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *transferServiceClient) GetQuTransferEventsForTick(ctx context.Context, in *TickRequest, opts ...grpc.CallOption) (*QuTransferEventsResponse, error) {
+	out := new(QuTransferEventsResponse)
+	err := c.cc.Invoke(ctx, "/qubic.transfers.proto.TransferService/GetQuTransferEventsForTick", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +64,8 @@ func (c *transferServiceClient) GetAssetChangeEventsForTick(ctx context.Context,
 // for forward compatibility
 type TransferServiceServer interface {
 	Health(context.Context, *emptypb.Empty) (*HealthResponse, error)
-	GetAssetChangeEventsForTick(context.Context, *TickRequest) (*AssetChangeEventResponse, error)
+	GetAssetChangeEventsForTick(context.Context, *TickRequest) (*AssetChangeEventsResponse, error)
+	GetQuTransferEventsForTick(context.Context, *TickRequest) (*QuTransferEventsResponse, error)
 	mustEmbedUnimplementedTransferServiceServer()
 }
 
@@ -65,8 +76,11 @@ type UnimplementedTransferServiceServer struct {
 func (UnimplementedTransferServiceServer) Health(context.Context, *emptypb.Empty) (*HealthResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Health not implemented")
 }
-func (UnimplementedTransferServiceServer) GetAssetChangeEventsForTick(context.Context, *TickRequest) (*AssetChangeEventResponse, error) {
+func (UnimplementedTransferServiceServer) GetAssetChangeEventsForTick(context.Context, *TickRequest) (*AssetChangeEventsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAssetChangeEventsForTick not implemented")
+}
+func (UnimplementedTransferServiceServer) GetQuTransferEventsForTick(context.Context, *TickRequest) (*QuTransferEventsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetQuTransferEventsForTick not implemented")
 }
 func (UnimplementedTransferServiceServer) mustEmbedUnimplementedTransferServiceServer() {}
 
@@ -117,6 +131,24 @@ func _TransferService_GetAssetChangeEventsForTick_Handler(srv interface{}, ctx c
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TransferService_GetQuTransferEventsForTick_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TickRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TransferServiceServer).GetQuTransferEventsForTick(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/qubic.transfers.proto.TransferService/GetQuTransferEventsForTick",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TransferServiceServer).GetQuTransferEventsForTick(ctx, req.(*TickRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TransferService_ServiceDesc is the grpc.ServiceDesc for TransferService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -131,6 +163,10 @@ var TransferService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAssetChangeEventsForTick",
 			Handler:    _TransferService_GetAssetChangeEventsForTick_Handler,
+		},
+		{
+			MethodName: "GetQuTransferEventsForTick",
+			Handler:    _TransferService_GetQuTransferEventsForTick_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

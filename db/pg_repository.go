@@ -20,6 +20,28 @@ func NewRepository(db *sqlx.DB) *PgRepository {
 	return &repo
 }
 
+// qu transfer events
+
+func (r *PgRepository) GetQuTransferEvents(tickNumber int) ([]*proto.QuTransferEvent, error) {
+	selectSql := `select src.identity sourceId, 
+       		dst.identity destinationId,
+       		ev.amount,
+       		e.event_type eventType
+		from qu_transfer_events ev
+		join events e on ev.event_id = e.id
+		join transactions tx on e.transaction_id = tx.id
+		join ticks ti on tx.tick_id = ti.id
+		join entities src on ev.source_entity_id = src.id
+		join entities dst on ev.destination_entity_id = dst.id
+		where ti.tick_number = $1 and e.event_type = 0;`
+	var events []*proto.QuTransferEvent
+	err := r.db.Select(&events, selectSql, tickNumber)
+	if err != nil {
+		return nil, errors.Wrap(err, "getting asset change events")
+	}
+	return events, nil
+}
+
 // asset change events
 
 func (r *PgRepository) GetAssetChangeEvents(tickNumber int) ([]*proto.AssetChangeEvent, error) {
@@ -40,7 +62,7 @@ func (r *PgRepository) GetAssetChangeEvents(tickNumber int) ([]*proto.AssetChang
 		join entities dst on ev.destination_entity_id = dst.id
 		where ti.tick_number = $1 
 		and e.event_type in (2, 3);`
-	events := []*proto.AssetChangeEvent{}
+	var events []*proto.AssetChangeEvent
 	err := r.db.Select(&events, selectSql, tickNumber)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting asset change events")
