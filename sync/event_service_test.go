@@ -10,9 +10,9 @@ import (
 )
 
 var (
-	processedTestTick      int = 0
-	availableTestTick      int = 0
-	storedQuTransferEvents int = 0
+	processedTestTick      = 0
+	availableTestTick      = 0
+	storedQuTransferEvents = 0
 )
 
 type FakeEventClient struct {
@@ -38,12 +38,12 @@ func (eventClient *FakeEventClient) GetTickInfo() (*client.TickInfo, error) {
 type FakeRepository struct {
 }
 
-func (f FakeRepository) GetNumericValue(_ string) (int, error) {
+func (f FakeRepository) GetLatestTick() (int, error) {
 	return processedTestTick, nil
 }
 
-func (f FakeRepository) UpdateNumericValue(_ string, value int) error {
-	processedTestTick = value
+func (f FakeRepository) UpdateLatestTick(tickNumber int) error {
+	processedTestTick = tickNumber
 	return nil
 }
 

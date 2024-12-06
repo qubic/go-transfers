@@ -299,23 +299,23 @@ func TestPgRepository_GetOrCreateAssetIssuanceEvent_GivenEvent_ThenGet(t *testin
 	deleteEntity(issuerId, t)
 }
 
-func TestPgRepository_GetNumericValue(t *testing.T) {
-	value, err := repository.GetNumericValue("tick")
+func TestPgRepository_GetLatestTick(t *testing.T) {
+	value, err := repository.GetLatestTick()
 	assert.Nil(t, err)
 	assert.True(t, value >= 0)
 }
 
 func TestPgRepository_UpdatedNumericValue(t *testing.T) {
-	original, err := repository.GetNumericValue("tick")
+	original, err := repository.GetLatestTick()
 	assert.Nil(t, err)
 
-	err = repository.UpdateNumericValue("tick", 42)
+	err = repository.UpdateLatestTick(42)
 	assert.Nil(t, err)
-	updated, err := repository.GetNumericValue("tick")
+	updated, err := repository.GetLatestTick()
 	assert.Nil(t, err)
 	assert.Equal(t, 42, updated)
 
-	_ = repository.UpdateNumericValue("tick", original) // clean up
+	_ = repository.UpdateLatestTick(original) // clean up
 }
 
 // test data set ups and clean ups

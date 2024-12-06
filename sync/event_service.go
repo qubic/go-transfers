@@ -16,8 +16,8 @@ type EventClient interface {
 }
 
 type TickNumberRepository interface {
-	GetNumericValue(key string) (int, error)
-	UpdateNumericValue(key string, value int) error
+	GetLatestTick() (int, error)
+	UpdateLatestTick(tickNumber int) error
 }
 
 type EventService struct {
@@ -26,16 +26,7 @@ type EventService struct {
 	repository     TickNumberRepository
 }
 
-var processedTick = 0
-
 func NewEventService(client EventClient, eventProcessor *EventProcessor, repository TickNumberRepository) (*EventService, error) {
-	var err error
-	processedTick, err = repository.GetNumericValue("tick")
-	if err != nil {
-		slog.Error(err.Error())
-		return nil, errors.Wrap(err, "getting processed tick value")
-	}
-
 	es := EventService{
 		client:         client,
 		eventProcessor: eventProcessor,
@@ -56,10 +47,17 @@ func (es *EventService) SyncInLoop() {
 }
 
 func (es *EventService) sync() error {
+	processedTick, err := es.repository.GetLatestTick()
+	if err != nil {
+		slog.Error(err.Error())
+		return errors.Wrap(err, "getting processed tick")
+	}
+
 	tickInfo, err := es.client.GetTickInfo()
 	if err != nil {
 		return errors.Wrap(err, "getting tick info")
 	}
+
 	if int(tickInfo.InitialTick) > processedTick {
 		slog.Info("initial tick > processed tick", "initial", tickInfo.InitialTick, "processed", processedTick)
 	}
@@ -72,15 +70,14 @@ func (es *EventService) sync() error {
 	endTick := int(math.Min(float64(status.AvailableTick), float64(tickInfo.CurrentTick)))
 	endTick = int(math.Min(float64(endTick), float64(startTick+100))) // max batch process 100 ticks per run
 
-	slog.Info("Status:", "processed", processedTick, "current", tickInfo.CurrentTick, "available", status.AvailableTick)
+	slog.Debug("Status:", "processed", processedTick, "current", tickInfo.CurrentTick, "available", status.AvailableTick)
 	if startTick <= endTick { // ok
 		slog.Debug("Syncing:", "from", startTick, "to", endTick)
-		err := es.ProcessTickEvents(startTick, endTick+1)
+		tick, err := es.ProcessTickEvents(startTick, endTick+1)
 		if err != nil {
 			return errors.Wrap(err, "processing tick events")
 		}
-		processedTick = endTick
-		err = es.repository.UpdateNumericValue("tick", endTick)
+		err = es.repository.UpdateLatestTick(tick)
 		if err != nil {
 			return errors.Wrap(err, "updating processed tick")
 		}
@@ -88,27 +85,26 @@ func (es *EventService) sync() error {
 	return nil
 }
 
-func (es *EventService) ProcessTickEvents(from int, toExcl int) error {
-	for i := from; i < toExcl; i++ {
+func (es *EventService) ProcessTickEvents(from int, toExcl int) (int, error) {
+	tick := from
+	for ; tick < toExcl; tick++ {
 
-		if i > math.MaxInt32 {
-			return errors.New("uint32 overflow")
+		if tick > math.MaxInt32 {
+			return -1, errors.New("uint32 overflow")
 		}
 
-		tickEvents, err := es.client.GetEvents(uint32(i)) // attention. need to cast here.
+		tickEvents, err := es.client.GetEvents(uint32(tick)) // attention. need to cast here.
 		if err != nil {
-			slog.Error("Error getting events for tick.", "Tick", i)
-			return errors.Wrap(err, "Error getting events for tick.")
+			slog.Error("Error getting events.", "tick", tick)
+			return -1, errors.Wrap(err, "Error getting events for tick.")
 		}
 
 		eventCount, err := es.eventProcessor.ProcessTickEvents(tickEvents)
 		if err != nil {
-			return errors.Wrap(err, "processing tick events.")
+			return -1, errors.Wrap(err, "processing tick events.")
 		}
 
-		slog.Info("Processed tick.", "tick", i, "events", eventCount)
-
+		slog.Info("Processed:", "tick", tick, "events", eventCount)
 	}
-	return nil
-
+	return tick, nil
 }

@@ -14,8 +14,10 @@ message TickRequest {
   uint32 tick = 1;
 }
 
-message AssetChangeEvents {
-  repeated AssetChangeEvent events = 1;
+message AssetChangeEventResponse {
+  uint32 tick = 1;
+  uint32 latestTick = 2;
+  repeated AssetChangeEvent events = 3;
 }
 
 // numberOfShares is returned as string via rest - unfortunately only string is possible in grpc for unit64.
@@ -37,7 +39,7 @@ service TransferService {
     };
   }
 
-  rpc GetAssetChangeEventsForTick(TickRequest) returns (AssetChangeEvents) {
+  rpc GetAssetChangeEventsForTick(TickRequest) returns (AssetChangeEventResponse) {
     option (google.api.http) = {
       get: "/api/v1/ticks/{tick}/events/asset-change"
     };

@@ -50,14 +50,22 @@ func (r *PgRepository) GetAssetChangeEvents(tickNumber int) ([]*proto.AssetChang
 
 // key value
 
-func (r *PgRepository) GetNumericValue(key string) (int, error) {
+func (r *PgRepository) GetLatestTick() (int, error) {
+	return r.getNumericValue("tick")
+}
+
+func (r *PgRepository) UpdateLatestTick(tickNumber int) error {
+	return r.updateNumericValue("tick", tickNumber)
+}
+
+func (r *PgRepository) getNumericValue(key string) (int, error) {
 	selectSql := `select numeric_value from key_values where key = $1`
 	var value int
 	err := r.db.Get(&value, selectSql, key)
 	return value, errors.Wrap(err, "getting numeric value")
 }
 
-func (r *PgRepository) UpdateNumericValue(key string, value int) error {
+func (r *PgRepository) updateNumericValue(key string, value int) error {
 	updateSql := `update key_values set numeric_value = $1 where key = $2`
 	_, err := r.db.Exec(updateSql, value, key)
 	return errors.Wrap(err, "updating numeric value")

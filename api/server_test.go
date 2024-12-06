@@ -13,6 +13,10 @@ import (
 type FakeRepository struct {
 }
 
+func (f FakeRepository) GetLatestTick() (int, error) {
+	return 123, nil
+}
+
 func (f FakeRepository) GetAssetChangeEvents(_ int) ([]*proto.AssetChangeEvent, error) {
 	return []*proto.AssetChangeEvent{}, nil
 }

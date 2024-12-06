@@ -26,6 +26,7 @@ type Server struct {
 }
 
 type Repository interface {
+	GetLatestTick() (int, error)
 	GetAssetChangeEvents(tickNumber int) ([]*proto.AssetChangeEvent, error)
 }
 
@@ -45,7 +46,7 @@ func (s *Server) Health(_ context.Context, _ *emptypb.Empty) (*proto.HealthRespo
 	}, nil
 }
 
-func (s *Server) GetAssetChangeEventsForTick(_ context.Context, request *proto.TickRequest) (*proto.AssetChangeEvents, error) {
+func (s *Server) GetAssetChangeEventsForTick(_ context.Context, request *proto.TickRequest) (*proto.AssetChangeEventResponse, error) {
 	tickNumber := request.GetTick()
 	events, err := s.repository.GetAssetChangeEvents(int(tickNumber))
 	if err != nil {
@@ -53,8 +54,9 @@ func (s *Server) GetAssetChangeEventsForTick(_ context.Context, request *proto.T
 		slog.Error("Error getting ownership change events.", "uuid", errorId.String(), "tickNumber", tickNumber, "error", err)
 		return nil, status.Errorf(codes.Internal, "retrieving events. [%v]", errorId)
 	}
+	latestTick, err := s.repository.GetLatestTick()
 	slog.Debug("Get asset transfers for tick.", "tick number", tickNumber)
-	return &proto.AssetChangeEvents{Events: events}, nil
+	return &proto.AssetChangeEventResponse{Tick: tickNumber, LatestTick: uint32(latestTick), Events: events}, nil
 }
 
 func (s *Server) Start() error {

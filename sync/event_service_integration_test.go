@@ -2,6 +2,7 @@ package sync
 
 import (
 	"flag"
+	"github.com/stretchr/testify/assert"
 	"go-transfers/client"
 	"go-transfers/config"
 	"go-transfers/db"
@@ -17,14 +18,16 @@ var (
 
 func TestEventService_GetEventRange(t *testing.T) {
 
-	err := eventService.ProcessTickEvents(17396000, 17396010)
+	tick, err := eventService.ProcessTickEvents(17396000, 17396010)
 	if err != nil {
 		t.Error(err)
 	}
-	err = eventService.ProcessTickEvents(16660843, 16660845)
+	assert.Equal(t, 17396010, tick)
+	tick, err = eventService.ProcessTickEvents(16660843, 16660845)
 	if err != nil {
 		t.Error(err)
 	}
+	assert.Equal(t, 16660845, tick)
 }
 
 //func TestEventService_Loop(t *testing.T) {

@@ -20,7 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TransferServiceClient interface {
 	Health(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*HealthResponse, error)
-	GetAssetChangeEventsForTick(ctx context.Context, in *TickRequest, opts ...grpc.CallOption) (*AssetChangeEvents, error)
+	GetAssetChangeEventsForTick(ctx context.Context, in *TickRequest, opts ...grpc.CallOption) (*AssetChangeEventResponse, error)
 }
 
 type transferServiceClient struct {
@@ -40,8 +40,8 @@ func (c *transferServiceClient) Health(ctx context.Context, in *emptypb.Empty, o
 	return out, nil
 }
 
-func (c *transferServiceClient) GetAssetChangeEventsForTick(ctx context.Context, in *TickRequest, opts ...grpc.CallOption) (*AssetChangeEvents, error) {
-	out := new(AssetChangeEvents)
+func (c *transferServiceClient) GetAssetChangeEventsForTick(ctx context.Context, in *TickRequest, opts ...grpc.CallOption) (*AssetChangeEventResponse, error) {
+	out := new(AssetChangeEventResponse)
 	err := c.cc.Invoke(ctx, "/qubic.transfers.proto.TransferService/GetAssetChangeEventsForTick", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func (c *transferServiceClient) GetAssetChangeEventsForTick(ctx context.Context,
 // for forward compatibility
 type TransferServiceServer interface {
 	Health(context.Context, *emptypb.Empty) (*HealthResponse, error)
-	GetAssetChangeEventsForTick(context.Context, *TickRequest) (*AssetChangeEvents, error)
+	GetAssetChangeEventsForTick(context.Context, *TickRequest) (*AssetChangeEventResponse, error)
 	mustEmbedUnimplementedTransferServiceServer()
 }
 
@@ -65,7 +65,7 @@ type UnimplementedTransferServiceServer struct {
 func (UnimplementedTransferServiceServer) Health(context.Context, *emptypb.Empty) (*HealthResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Health not implemented")
 }
-func (UnimplementedTransferServiceServer) GetAssetChangeEventsForTick(context.Context, *TickRequest) (*AssetChangeEvents, error) {
+func (UnimplementedTransferServiceServer) GetAssetChangeEventsForTick(context.Context, *TickRequest) (*AssetChangeEventResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAssetChangeEventsForTick not implemented")
 }
 func (UnimplementedTransferServiceServer) mustEmbedUnimplementedTransferServiceServer() {}
