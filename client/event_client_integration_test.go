@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"flag"
 	"github.com/stretchr/testify/assert"
 	"go-transfers/config"
@@ -15,20 +16,20 @@ var (
 
 func TestEventClient_GetEvents(t *testing.T) {
 	const tickNumber uint32 = 17302596
-	tickEvents, err := eventClient.GetEvents(tickNumber)
+	tickEvents, err := eventClient.GetEvents(context.Background(), tickNumber)
 	assert.Nil(t, err)
 	slog.Info("Received tick events.", "tick", tickNumber, "events", tickEvents)
 }
 
 func TestEventClient_GetStatus(t *testing.T) {
-	status, err := eventClient.GetStatus()
+	status, err := eventClient.GetStatus(context.Background())
 	assert.Nil(t, err)
 	assert.NotNil(t, status.AvailableTick, "last processed tick is nil")
 	slog.Info("Received event status", "event status", status)
 }
 
 func TestEventClient_GetTickInfo(t *testing.T) {
-	info, err := eventClient.GetTickInfo()
+	info, err := eventClient.GetTickInfo(context.Background())
 	assert.Nil(t, err)
 	slog.Info("Received tick info", "tick info", info)
 }

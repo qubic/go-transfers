@@ -1,6 +1,7 @@
 package sync
 
 import (
+	"context"
 	eventspb "github.com/qubic/go-events/proto"
 	"github.com/stretchr/testify/assert"
 	"go-transfers/client"
@@ -23,15 +24,15 @@ func NewFakeEventClient(tickEvents map[uint32]*eventspb.TickEvents) (*FakeEventC
 	return &FakeEventClient{events: tickEvents}, nil
 }
 
-func (eventClient *FakeEventClient) GetStatus() (*client.EventStatus, error) {
+func (eventClient *FakeEventClient) GetStatus(_ context.Context) (*client.EventStatus, error) {
 	return &client.EventStatus{AvailableTick: uint32(availableTestTick)}, nil
 }
 
-func (eventClient *FakeEventClient) GetEvents(tickNumber uint32) (*eventspb.TickEvents, error) {
+func (eventClient *FakeEventClient) GetEvents(_ context.Context, tickNumber uint32) (*eventspb.TickEvents, error) {
 	return eventClient.events[tickNumber], nil
 }
 
-func (eventClient *FakeEventClient) GetTickInfo() (*client.TickInfo, error) {
+func (eventClient *FakeEventClient) GetTickInfo(_ context.Context) (*client.TickInfo, error) {
 	return &client.TickInfo{CurrentTick: uint32(availableTestTick)}, nil
 }
 

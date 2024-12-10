@@ -1,6 +1,7 @@
 package sync
 
 import (
+	"context"
 	"github.com/pkg/errors"
 	eventspb "github.com/qubic/go-events/proto"
 	"go-transfers/client"
@@ -10,9 +11,9 @@ import (
 )
 
 type EventClient interface {
-	GetEvents(tickNumber uint32) (*eventspb.TickEvents, error)
-	GetStatus() (*client.EventStatus, error)
-	GetTickInfo() (*client.TickInfo, error)
+	GetEvents(ctx context.Context, tickNumber uint32) (*eventspb.TickEvents, error)
+	GetStatus(ctx context.Context) (*client.EventStatus, error)
+	GetTickInfo(ctx context.Context) (*client.TickInfo, error)
 }
 
 type TickNumberRepository interface {
@@ -53,7 +54,7 @@ func (es *EventService) sync() error {
 		return errors.Wrap(err, "getting processed tick")
 	}
 
-	tickInfo, err := es.client.GetTickInfo()
+	tickInfo, err := es.client.GetTickInfo(context.Background())
 	if err != nil {
 		return errors.Wrap(err, "getting tick info")
 	}
@@ -63,7 +64,7 @@ func (es *EventService) sync() error {
 	}
 	startTick := int(math.Max(float64(processedTick+1), float64(tickInfo.InitialTick)))
 
-	status, err := es.client.GetStatus()
+	status, err := es.client.GetStatus(context.Background())
 	if err != nil {
 		return errors.Wrap(err, "getting event status.")
 	}
@@ -95,7 +96,7 @@ func (es *EventService) ProcessTickEvents(from, toExcl int) (int, error) {
 			return -1, errors.New("uint32 overflow")
 		}
 
-		tickEvents, err := es.client.GetEvents(uint32(tick)) // attention. need to cast here.
+		tickEvents, err := es.client.GetEvents(context.Background(), uint32(tick)) // attention. need to cast here.
 		if err != nil {
 			slog.Error("Error getting events.", "tick", tick)
 			return -1, errors.Wrap(err, "Error getting events for tick.")

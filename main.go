@@ -20,6 +20,9 @@ import (
 	"syscall"
 )
 
+// TODO add log config
+// TODO embed migrations and .env file
+
 func main() {
 	if runErr := run(); runErr != nil {
 		log.Fatalf("main: exited with error: %s", runErr.Error())

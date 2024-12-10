@@ -39,12 +39,12 @@ func NewIntegrationEventClient(eventApiUrl, coreApiUrl string) (*IntegrationEven
 	return &e, nil
 }
 
-func (eventClient *IntegrationEventClient) GetEvents(tickNumber uint32) (*eventspb.TickEvents, error) {
-	return eventClient.eventApi.GetTickEvents(context.Background(), &eventspb.GetTickEventsRequest{Tick: tickNumber})
+func (eventClient *IntegrationEventClient) GetEvents(context context.Context, tickNumber uint32) (*eventspb.TickEvents, error) {
+	return eventClient.eventApi.GetTickEvents(context, &eventspb.GetTickEventsRequest{Tick: tickNumber})
 }
 
-func (eventClient *IntegrationEventClient) GetStatus() (*EventStatus, error) {
-	s, err := eventClient.eventApi.GetStatus(context.Background(), nil)
+func (eventClient *IntegrationEventClient) GetStatus(context context.Context) (*EventStatus, error) {
+	s, err := eventClient.eventApi.GetStatus(context, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting events status")
 	}
@@ -54,8 +54,8 @@ func (eventClient *IntegrationEventClient) GetStatus() (*EventStatus, error) {
 	return &status, nil
 }
 
-func (eventClient *IntegrationEventClient) GetTickInfo() (*TickInfo, error) {
-	ti, err := eventClient.coreApi.GetTickInfo(context.Background(), nil)
+func (eventClient *IntegrationEventClient) GetTickInfo(context context.Context) (*TickInfo, error) {
+	ti, err := eventClient.coreApi.GetTickInfo(context, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting tick info")
 	}
