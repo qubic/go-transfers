@@ -2,9 +2,9 @@ package api
 
 import (
 	"flag"
+	"github.com/gookit/slog"
 	"go-transfers/proto"
 	"io"
-	"log/slog"
 	"net/http"
 	"os"
 	"testing"

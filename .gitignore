@@ -7,3 +7,8 @@ go-transfers
 # jetbrains ide
 *.iml
 .idea
+
+# log files
+*.log
+*.log.*
+*.log*.gz

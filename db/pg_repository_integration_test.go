@@ -3,10 +3,10 @@ package db
 import (
 	"database/sql"
 	"flag"
+	"github.com/gookit/slog"
 	"github.com/stretchr/testify/assert"
 	"go-transfers/config"
 	"go-transfers/proto"
-	"log/slog"
 	"os"
 	"testing"
 )
@@ -552,7 +552,7 @@ func (r *PgRepository) delete(statement string, args ...interface{}) (int64, err
 // test case infrastructure
 
 func TestMain(m *testing.M) {
-	slog.SetLogLoggerLevel(slog.LevelDebug)
+	slog.SetLogLevel(slog.DebugLevel)
 	setup()
 	// Parse args and run
 	flag.Parse()

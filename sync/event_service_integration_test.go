@@ -2,11 +2,11 @@ package sync
 
 import (
 	"flag"
+	"github.com/gookit/slog"
 	"github.com/stretchr/testify/assert"
 	"go-transfers/client"
 	"go-transfers/config"
 	"go-transfers/db"
-	"log/slog"
 	"os"
 	"testing"
 )

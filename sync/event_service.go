@@ -2,10 +2,10 @@ package sync
 
 import (
 	"context"
+	"github.com/gookit/slog"
 	"github.com/pkg/errors"
 	eventspb "github.com/qubic/go-events/proto"
 	"go-transfers/client"
-	"log/slog"
 	"math"
 	"time"
 )
@@ -48,6 +48,7 @@ func (es *EventService) SyncInLoop() {
 }
 
 func (es *EventService) sync() error {
+
 	processedTick, err := es.repository.GetLatestTick()
 	if err != nil {
 		slog.Error(err.Error())
@@ -98,7 +99,7 @@ func (es *EventService) ProcessTickEvents(from, toExcl int) (int, error) {
 
 		tickEvents, err := es.client.GetEvents(context.Background(), uint32(tick)) // attention. need to cast here.
 		if err != nil {
-			slog.Error("Error getting events.", "tick", tick)
+			slog.Warn("Error getting events.", "tick", tick)
 			return -1, errors.Wrap(err, "Error getting events for tick.")
 		}
 

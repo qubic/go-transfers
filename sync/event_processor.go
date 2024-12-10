@@ -2,10 +2,10 @@ package sync
 
 import (
 	"encoding/base64"
+	"github.com/gookit/slog"
 	"github.com/pkg/errors"
 	eventspb "github.com/qubic/go-events/proto"
 	"github.com/qubic/go-qubic/sdk/events"
-	"log/slog"
 	"strings"
 )
 

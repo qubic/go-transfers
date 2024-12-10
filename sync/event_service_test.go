@@ -2,10 +2,10 @@ package sync
 
 import (
 	"context"
+	"github.com/gookit/slog"
 	eventspb "github.com/qubic/go-events/proto"
 	"github.com/stretchr/testify/assert"
 	"go-transfers/client"
-	"log/slog"
 	"math/rand/v2"
 	"testing"
 )
@@ -83,7 +83,7 @@ func (f FakeRepository) GetOrCreateTick(_ uint32) (int, error) {
 
 //goland:noinspection SpellCheckingInspection
 func TestEventService_ProcessTickEvents(t *testing.T) {
-	slog.SetLogLoggerLevel(slog.LevelDebug)
+	slog.SetLogLevel(slog.DebugLevel)
 
 	event := event(0, "sMmo18V9WMO9LstUtxvWC2ZfJc2/FZWKEUdAKOqNKDIBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBCDwAAAAAA", &eventspb.Event_Header{EventId: rand.Uint64N(1000000)})
 

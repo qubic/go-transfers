@@ -7,6 +7,9 @@ import (
 	_ "github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/gookit/slog"
+	"github.com/gookit/slog/handler"
+	"github.com/gookit/slog/rotatefile"
 	"github.com/pkg/errors"
 	"go-transfers/api"
 	"go-transfers/client"
@@ -14,7 +17,6 @@ import (
 	"go-transfers/db"
 	"go-transfers/sync"
 	"log"
-	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -35,6 +37,11 @@ func run() error {
 	if err != nil {
 		return errors.Wrap(err, "loading config")
 	}
+
+	// logging
+	configureLogging(configuration.Log)
+	// defer slog.MustClose()
+	// defer slog.MustFlush()
 
 	// database
 	err = migrateDatabase(&configuration.Database)
@@ -86,6 +93,51 @@ func run() error {
 			return nil
 		}
 	}
+}
+
+func configureLogging(config config.LogConfig) {
+	const LogTimeFormat = "2006-01-02 15:04:05"
+
+	// console
+	logTemplate := "[{{datetime}}] [{{level}}] {{message}} {{data}} {{extra}}\n"
+	formatter := slog.NewTextFormatter().WithEnableColor(true)
+	formatter.SetTemplate(logTemplate)
+	formatter.TimeFormat = LogTimeFormat
+	slog.SetFormatter(formatter)
+	logLevel := slog.LevelByName(config.Level)
+	slog.SetLogLevel(logLevel)
+
+	// error log
+	h1 := handler.NewBuilder().
+		WithLogfile("./error.log").
+		WithLogLevels(slog.DangerLevels).
+		WithRotateTime(rotatefile.EveryDay).
+		WithBuffMode(handler.BuffModeLine).
+		WithBuffSize(handler.DefaultBufferSize).
+		WithCompress(true).
+		Build()
+	errorFormatter := slog.NewTextFormatter()
+	errorFormatter.TimeFormat = LogTimeFormat
+	h1.SetFormatter(errorFormatter) // log complete data
+
+	// normal application log
+	h2 := handler.NewBuilder().
+		WithLogfile("./application.log").
+		WithLogLevels(slog.Levels{slog.InfoLevel, slog.PanicLevel, slog.FatalLevel, slog.ErrorLevel, slog.WarnLevel}).
+		WithRotateTime(rotatefile.EveryDay).
+		WithBuffMode(handler.BuffModeLine).
+		WithBuffSize(handler.DefaultBufferSize).
+		WithCompress(true).
+		Build()
+	infoFormatter := slog.NewTextFormatter()
+	infoFormatter.TimeFormat = LogTimeFormat
+	infoFormatter.SetTemplate(logTemplate)
+	h2.SetFormatter(infoFormatter)
+
+	slog.PushHandler(h1)
+	slog.PushHandler(h2)
+
+	slog.Info("Logging level set to", logLevel)
 }
 
 func migrateDatabase(config *config.DatabaseConfig) error {

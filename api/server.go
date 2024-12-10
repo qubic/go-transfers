@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"github.com/google/uuid"
+	"github.com/gookit/slog"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go-transfers/proto"
 	"google.golang.org/grpc"
@@ -13,7 +14,6 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"log"
-	"log/slog"
 	"net"
 	"net/http"
 )

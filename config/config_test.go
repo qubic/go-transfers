@@ -1,12 +1,12 @@
 package config
 
 import (
-	"log/slog"
+	"github.com/gookit/slog"
 	"testing"
 )
 
 func TestConfig_GetConfig(t *testing.T) {
-	slog.SetLogLoggerLevel(slog.LevelDebug)
+	slog.SetLogLevel(slog.DebugLevel)
 
 	t.Setenv("QUBIC_TRANSFERS_ENV", "test")
 	config, getConfigErr := GetConfig(".", "..")
@@ -35,6 +35,9 @@ func TestConfig_GetConfig(t *testing.T) {
 		App: AppConfig{
 			SyncEnabled: true,
 			ApiEnabled:  true,
+		},
+		Log: LogConfig{
+			Level: "Info",
 		},
 	}
 

@@ -3,9 +3,9 @@ package client
 import (
 	"context"
 	"flag"
+	"github.com/gookit/slog"
 	"github.com/stretchr/testify/assert"
 	"go-transfers/config"
-	"log/slog"
 	"os"
 	"testing"
 )

@@ -3,12 +3,12 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"github.com/gookit/slog"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 	"go-transfers/config"
 	"go-transfers/proto"
-	"log/slog"
 )
 
 type PgRepository struct {

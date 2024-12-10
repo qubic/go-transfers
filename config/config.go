@@ -3,9 +3,9 @@ package config
 import (
 	"fmt"
 	"github.com/ardanlabs/conf"
+	"github.com/gookit/slog"
 	"github.com/joho/godotenv"
 	"github.com/pkg/errors"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"sync"
@@ -38,11 +38,16 @@ type AppConfig struct {
 	ApiEnabled  bool
 }
 
+type LogConfig struct {
+	Level string
+}
+
 type Config struct {
 	App      AppConfig
 	Server   ServerConfig
 	Client   ClientConfig
 	Database DatabaseConfig
+	Log      LogConfig
 }
 
 var lock = &sync.Mutex{}
