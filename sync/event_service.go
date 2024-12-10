@@ -37,9 +37,11 @@ func NewEventService(client EventClient, eventProcessor *EventProcessor, reposit
 }
 
 func (es *EventService) SyncInLoop() {
-	loopTick := time.Tick(time.Second * 3)
+	var count uint64
+	loopTick := time.Tick(time.Second * 1)
 	for range loopTick {
-		err := es.sync()
+		err := es.sync(count)
+		count++
 		time.Sleep(time.Second)
 		if err != nil {
 			slog.Error("processing tick events", "err", err.Error())
@@ -47,7 +49,7 @@ func (es *EventService) SyncInLoop() {
 	}
 }
 
-func (es *EventService) sync() error {
+func (es *EventService) sync(count uint64) error {
 
 	processedTick, err := es.repository.GetLatestTick()
 	if err != nil {
@@ -72,7 +74,10 @@ func (es *EventService) sync() error {
 	endTick := int(math.Min(float64(status.AvailableTick), float64(tickInfo.CurrentTick)))
 	endTick = int(math.Min(float64(endTick), float64(startTick+100))) // max batch process 100 ticks per run
 
-	slog.Debug("Status:", "processed", processedTick, "current", tickInfo.CurrentTick, "available", status.AvailableTick)
+	if count%500 == 0 { // log status in regular intervals
+		slog.Info("Status:", "processed", processedTick, "current", tickInfo.CurrentTick, "available", status.AvailableTick)
+	}
+
 	if startTick <= endTick { // ok
 		slog.Debug("Syncing:", "from", startTick, "to", endTick)
 		tick, err := es.ProcessTickEvents(startTick, endTick+1) // end tick exclusive
