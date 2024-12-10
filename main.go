@@ -32,6 +32,7 @@ func main() {
 }
 
 func run() error {
+
 	// load config
 	configuration, err := loadConfig()
 	if err != nil {
@@ -40,8 +41,8 @@ func run() error {
 
 	// logging
 	configureLogging(configuration.Log)
-	// defer slog.MustClose()
-	// defer slog.MustFlush()
+	defer slog.MustClose()
+	defer slog.MustFlush()
 
 	// database
 	err = migrateDatabase(&configuration.Database)
@@ -113,7 +114,6 @@ func configureLogging(config config.LogConfig) {
 		WithLogLevels(slog.DangerLevels).
 		WithRotateTime(rotatefile.EveryDay).
 		WithBuffMode(handler.BuffModeLine).
-		WithBuffSize(handler.DefaultBufferSize).
 		WithCompress(true).
 		Build()
 	errorFormatter := slog.NewTextFormatter()
@@ -126,7 +126,6 @@ func configureLogging(config config.LogConfig) {
 		WithLogLevels(slog.Levels{slog.InfoLevel, slog.PanicLevel, slog.FatalLevel, slog.ErrorLevel, slog.WarnLevel}).
 		WithRotateTime(rotatefile.EveryDay).
 		WithBuffMode(handler.BuffModeLine).
-		WithBuffSize(handler.DefaultBufferSize).
 		WithCompress(true).
 		Build()
 	infoFormatter := slog.NewTextFormatter()
