@@ -119,7 +119,7 @@ func TestEventService_ProcessTickEvents(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = eventService.sync()
+	err = eventService.sync(42)
 	if err != nil {
 		t.Error(err)
 	}
