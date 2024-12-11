@@ -32,9 +32,9 @@ all: $(GO)
 
 openapi:
 		protoc -I=. --openapiv2_out . \
-				--openapiv2_opt allow_merge=true,merge_file_name=qubic-events-rpc $(OPT_ARGS) \
+				--openapiv2_opt allow_merge=true,merge_file_name=qubic-transfers-rpc $(OPT_ARGS) \
 			   *.proto
-		jq '. += {"host":"api.qubic.org", "schemes": ["http", "https"]}' qubic-events-rpc.swagger.json > tmp && mv tmp qubic-events-rpc.swagger.json
+		jq '. += {"host":"qxinfo.qubic.org", "basePath": "/gotr", "schemes": ["https"]}' qubic-transfers-rpc.swagger.json > tmp && mv tmp qubic-transfers-rpc.swagger.json
 
 clean:
 		rm -f *.pb.go
