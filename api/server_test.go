@@ -66,7 +66,6 @@ func TestServer_whenHealth_thenReturnStatusUp(t *testing.T) {
 		t.Error(err)
 	}
 
-	// TODO how to validate json body?
 	if string(body) != "{\"status\":\"UP\"}" {
 		t.Errorf("Unexpected response body: [%s]", body)
 	}

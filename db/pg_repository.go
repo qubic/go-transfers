@@ -2,12 +2,10 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/gookit/slog"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
-	"go-transfers/config"
 	"go-transfers/proto"
 )
 
@@ -344,17 +342,4 @@ func (r *PgRepository) Close() {
 	} else {
 		slog.Info("closed database.")
 	}
-}
-
-func CreateDatabaseWithConfig(c *config.DatabaseConfig) (*sqlx.DB, error) {
-	connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s",
-		c.Host, c.Port, c.User, c.Pass, c.Name)
-	pgDb, err := sqlx.Connect("postgres", connectionString)
-	if err != nil {
-		return nil, err
-	}
-	pgDb.SetMaxOpenConns(c.MaxOpen)
-	pgDb.SetMaxIdleConns(c.MaxIdle)
-	slog.Info("Connected to database!")
-	return pgDb, nil
 }

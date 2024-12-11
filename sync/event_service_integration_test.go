@@ -14,6 +14,7 @@ import (
 var (
 	eventClient  EventClient
 	eventService *EventService
+	repository   *db.PgRepository
 )
 
 func TestEventService_GetEventRange(t *testing.T) {
@@ -26,11 +27,6 @@ func TestEventService_GetEventRange(t *testing.T) {
 
 }
 
-//func TestEventService_Loop(t *testing.T) {
-//	go eventService.SyncInLoop()
-//	time.Sleep(time.Second * 30)
-//}
-
 // test setup
 
 func TestMain(m *testing.M) {
@@ -40,7 +36,12 @@ func TestMain(m *testing.M) {
 	flag.Parse()
 	exitCode := m.Run()
 	// Exit
+	tearDown()
 	os.Exit(exitCode)
+}
+
+func tearDown() {
+	repository.Close()
 }
 
 func setup() {
@@ -56,14 +57,14 @@ func setup() {
 		os.Exit(-1)
 	}
 
-	pgDb, err := db.CreateDatabaseWithConfig(&c.Database)
-	// defer pgDb.Close()
+	dbc := c.Database
+	pgDb, err := db.CreateDatabase(dbc.User, dbc.Pass, dbc.Name, dbc.Host, dbc.Port, dbc.MaxOpen, dbc.MaxIdle)
 	if err != nil {
 		slog.Error("error creating database")
 		os.Exit(-1)
 	}
 
-	repository := db.NewRepository(pgDb)
+	repository = db.NewRepository(pgDb)
 	eventProcessor := NewEventProcessor(repository)
 	eventService, err = NewEventService(eventClient, eventProcessor, repository)
 	if err != nil {

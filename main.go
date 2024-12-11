@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/ardanlabs/conf"
-	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -49,7 +48,9 @@ func run() error {
 	if err != nil {
 		return errors.Wrap(err, "migrating database")
 	}
-	pgDb, err := db.CreateDatabaseWithConfig(&configuration.Database)
+
+	dbc := configuration.Database
+	pgDb, err := db.CreateDatabase(dbc.User, dbc.Pass, dbc.Name, dbc.Host, dbc.Port, dbc.MaxOpen, dbc.MaxIdle)
 	if err != nil {
 		return errors.Wrap(err, "opening database")
 	}
@@ -140,22 +141,8 @@ func configureLogging(config config.LogConfig) {
 }
 
 func migrateDatabase(config *config.DatabaseConfig) error {
-	// run migrations
-	m, err := migrate.New("file://db/migrations",
-		fmt.Sprintf("postgres://%s:%s@%s:%d/%s", config.User, config.Pass, config.Host, config.Port, config.Name))
-	if err != nil {
-		return errors.Wrap(err, "initializing migrate")
-	}
-	if err = m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		return errors.Wrap(err, "running migrations")
-	} else {
-		version, dirty, _ := m.Version() // we don't care about error here. we only log info.
-		slog.Info("db migrations applied:", "version", version, "dirty", dirty,
-			"changed", !errors.Is(err, migrate.ErrNoChange))
-		sErr, dErr := m.Close()
-		slog.Info("db migration close", "source-errors", sErr, "db-errors", dErr)
-	}
-	return nil
+	connectionString := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", config.User, config.Pass, config.Host, config.Port, config.Name)
+	return db.MigrateDatabase("file://db/migrations", connectionString)
 }
 
 func loadConfig() (*config.Config, error) {

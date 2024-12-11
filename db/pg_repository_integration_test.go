@@ -1,18 +1,24 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"flag"
 	"github.com/gookit/slog"
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
-	"go-transfers/config"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
+	"github.com/testcontainers/testcontainers-go/wait"
 	"go-transfers/proto"
 	"os"
 	"testing"
+	"time"
 )
 
 var (
-	repository *PgRepository
+	repository        *PgRepository
+	postgresContainer testcontainers.Container
 )
 
 const (
@@ -563,15 +569,20 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	c, err := config.GetConfig("..")
+	connectionString, err := setupDatabase()
 	if err != nil {
-		slog.Error("error getting config")
+		slog.Error("setting up test database", "error", err)
 		os.Exit(-1)
 	}
-
-	db, err := CreateDatabaseWithConfig(&c.Database)
+	slog.Info("DB", "connection-string", connectionString)
+	db, err := sqlx.Connect("postgres", connectionString)
 	if err != nil {
-		slog.Error("error creating repository")
+		slog.Error("connecting to database", "error", err)
+		os.Exit(-1)
+	}
+	err = MigrateDatabase("file://migrations", connectionString)
+	if err != nil {
+		slog.Error("migrating database", "error", err)
 		os.Exit(-1)
 	}
 	repository = NewRepository(db)
@@ -579,4 +590,29 @@ func setup() {
 
 func teardown() {
 	repository.Close()
+	err := testcontainers.TerminateContainer(postgresContainer)
+	if err != nil {
+		slog.Error("terminating the postgres container", "error", err)
+	}
+}
+
+func setupDatabase() (string, error) {
+	ctx := context.Background()
+	postgresContainer, err := postgres.Run(ctx,
+		"postgres:16-alpine",
+		testcontainers.WithLogger(slog.NewStdLogger()),
+		postgres.WithDatabase("test"),
+		postgres.WithUsername("test"),
+		postgres.WithPassword("test"),
+		testcontainers.WithWaitStrategy(
+			wait.ForExposedPort(),
+			wait.ForLog("database system is ready to accept connections").
+				WithOccurrence(2).
+				WithStartupTimeout(5*time.Second)),
+	)
+	if err != nil {
+		slog.Error("starting postgres container", "error", err)
+		return "", err
+	}
+	return postgresContainer.ConnectionString(ctx, "sslmode=disable")
 }
