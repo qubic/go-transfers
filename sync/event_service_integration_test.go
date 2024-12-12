@@ -117,7 +117,7 @@ func setupDatabase(ctx context.Context) *sqlx.DB {
 		slog.Error("connecting to database", "error", err)
 		os.Exit(-1)
 	}
-	err = db.MigrateDatabase("file://../db/migrations", connectionString)
+	err = db.Migrate(connectionString)
 	if err != nil {
 		slog.Error("migrating database", "error", err)
 		os.Exit(-1)

@@ -21,9 +21,6 @@ import (
 	"syscall"
 )
 
-// TODO add log config
-// TODO embed migrations and .env file
-
 func main() {
 	if runErr := run(); runErr != nil {
 		log.Fatalf("main: exited with error: %s", runErr.Error())
@@ -142,7 +139,7 @@ func configureLogging(config config.LogConfig) {
 
 func migrateDatabase(config *config.DatabaseConfig) error {
 	connectionString := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", config.User, config.Pass, config.Host, config.Port, config.Name)
-	return db.MigrateDatabase("file://db/migrations", connectionString)
+	return db.Migrate(connectionString)
 }
 
 func loadConfig() (*config.Config, error) {

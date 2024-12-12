@@ -580,7 +580,8 @@ func setup() {
 		slog.Error("connecting to database", "error", err)
 		os.Exit(-1)
 	}
-	err = MigrateDatabase("file://migrations", connectionString)
+	err = Migrate(connectionString)
+
 	if err != nil {
 		slog.Error("migrating database", "error", err)
 		os.Exit(-1)
