@@ -113,7 +113,13 @@ func (es *EventService) ProcessTickEvents(from, toExcl int) (int, error) {
 			return -1, errors.Wrap(err, "processing tick events.")
 		}
 
-		slog.Info("Processed:", "tick", tick, "events", eventCount)
+		var numberOfTransactionEvents, numberOfTotalEvents int
+		for _, txEv := range tickEvents.TxEvents {
+			numberOfTotalEvents += len(txEv.Events)
+			numberOfTransactionEvents++
+		}
+
+		slog.Info("Processed:", "tick", tick, "events", eventCount, "tx-events", numberOfTransactionEvents, "total-events", numberOfTotalEvents)
 		processed = tick
 	}
 	return processed, nil
