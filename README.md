@@ -32,3 +32,8 @@ Environment variables need to be set. See [.env](./.env) for variables and defau
 ## Build & Run
 
 Run `go build` in the root folder. Then you can run the executable.
+
+### Run tests
+
+Run `go test -v ./...` to execute all tests. To exclude system integration tests that have dependencies to external
+systems and therefore need configuration use the `ci` tag : `go test -v -tags ci ./...`.
