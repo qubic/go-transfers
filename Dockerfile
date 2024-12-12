@@ -13,10 +13,11 @@ LABEL authors="mio@qubic.org"
 
 # copy executable from build stage
 COPY --from=builder /src/go-transfers/go-transfers /app/go-transfers
+# copy default configuration
+COPY .env /app/
+
 RUN chmod +x /app/go-transfers
-# copy default configuration into container
-COPY .env /src/app/go-transfers
 
 WORKDIR /app
 
-ENTRYPOINT ["./qubic-transfers"]
+ENTRYPOINT ["./go-transfers"]

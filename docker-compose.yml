@@ -1,0 +1,15 @@
+services:
+  go-transfers:
+    container_name: 'go-transfers'
+    build:
+      context: .
+      dockerfile: 'Dockerfile'
+    image: 'qubic/go-transfers:latest'
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    network_mode: 'host'
+    environment:
+      - QUBIC_TRANSFERS_CLIENT_EVENT_API_URL=
+      - QUBIC_TRANSFERS_CLIENT_CORE_API_URL=
+      - QUBIC_TRANSFERS_DATABASE_PASS=
