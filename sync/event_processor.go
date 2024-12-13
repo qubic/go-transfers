@@ -59,15 +59,16 @@ func (ep *EventProcessor) ProcessTickEvents(tickEvents *eventspb.TickEvents) (in
 				if err != nil {
 					return -1, errors.Wrap(err, "base64 decoding event data.")
 				}
+				var dbId int
 				eventType := uint8(event.EventType)
 				if eventType == events.EventTypeQuTransfer {
-					err = ep.storeQuTransferEvent(eventData, eventId)
+					dbId, err = ep.storeQuTransferEvent(eventData, eventId)
 				} else if eventType == events.EventTypeAssetOwnershipChange {
-					err = ep.storeAssetOwnershipChangeEvent(eventData, eventId)
+					dbId, err = ep.storeAssetOwnershipChangeEvent(eventData, eventId)
 				} else if eventType == events.EventTypeAssetPossessionChange {
-					err = ep.storeAssetPossessionChangeEvent(eventData, eventId)
+					dbId, err = ep.storeAssetPossessionChangeEvent(eventData, eventId)
 				} else if eventType == events.EventTypeAssetIssuance {
-					err = ep.storeAssetIssuanceEvent(eventData, eventId)
+					dbId, err = ep.storeAssetIssuanceEvent(eventData, eventId)
 				} else {
 					err = errors.New("unexpected unhandled event type.")
 				}
@@ -75,6 +76,7 @@ func (ep *EventProcessor) ProcessTickEvents(tickEvents *eventspb.TickEvents) (in
 					slog.Error("Could not process event.", "eventType", event.EventType, "eventData", eventData, "error", err)
 					return -1, errors.Wrap(err, "storing event details")
 				} else {
+					slog.Info("Stored event:", "id", dbId, "type", eventType, "transaction", transactionId)
 					count++
 				}
 			}
@@ -125,105 +127,105 @@ func (ep *EventProcessor) getEventId(event *eventspb.Event) (uint64, error) {
 
 }
 
-func (ep *EventProcessor) storeAssetIssuanceEvent(eventData []byte, eventId int) error {
+func (ep *EventProcessor) storeAssetIssuanceEvent(eventData []byte, eventId int) (int, error) {
 	decodedEvent, err := DecodeAssetIssuanceEvent(eventData)
 	if err != nil {
-		return errors.Wrap(err, "decoding event")
+		return -1, errors.Wrap(err, "decoding asset issuance")
 	}
 	assetIssuanceEvent := decodedEvent.GetAssetIssuanceEvent()
 	assetId, err := ep.repository.GetOrCreateAsset(assetIssuanceEvent.GetSourceId(), assetIssuanceEvent.GetAssetName())
 	if err != nil {
-		return err
+		return -1, errors.Wrap(err, "storing asset issuance")
 	}
 	assetIssuanceEventId, err := ep.repository.GetOrCreateAssetIssuanceEvent(eventId, assetId,
 		assetIssuanceEvent.GetNumberOfShares(),
 		assetIssuanceEvent.GetMeasurementUnit(),
 		assetIssuanceEvent.GetNumberOfDecimals())
 	if err != nil {
-		return err
+		return -1, errors.Wrap(err, "storing asset issuance")
 	} else {
 		slog.Debug("Stored asset issuance event.", "id", assetIssuanceEventId)
 	}
-	return nil
+	return assetIssuanceEventId, nil
 }
 
-func (ep *EventProcessor) storeAssetPossessionChangeEvent(eventData []byte, eventId int) error {
+func (ep *EventProcessor) storeAssetPossessionChangeEvent(eventData []byte, eventId int) (int, error) {
 	decodedEvent, err := DecodeAssetPossessionChangeEvent(eventData)
 	if err != nil {
-		return errors.Wrap(err, "decoding event")
+		return -1, errors.Wrap(err, "decoding asset possession change")
 	}
 	assetChangeEvent := decodedEvent.GetAssetPossessionChangeEvent()
 	sourceId, err := ep.repository.GetOrCreateEntity(assetChangeEvent.GetSourceId())
 	if err != nil {
-		return err
+		return -1, errors.Wrap(err, "storing asset possession change")
 	}
 	destinationId, err := ep.repository.GetOrCreateEntity(assetChangeEvent.GetDestId())
 	if err != nil {
-		return err
+		return -1, errors.Wrap(err, "storing asset possession change")
 	}
 	assetId, err := ep.repository.GetOrCreateAsset(assetChangeEvent.GetIssuerId(), assetChangeEvent.GetAssetName())
 	if err != nil {
-		return err
+		return -1, errors.Wrap(err, "storing asset possession change")
 	}
 	assetChangeEventId, err := ep.repository.GetOrCreateAssetChangeEvent(eventId, assetId, sourceId, destinationId, assetChangeEvent.GetNumberOfShares())
 	if err != nil {
-		return err
+		return -1, errors.Wrap(err, "storing asset possession change")
 	} else {
 		slog.Debug("Stored asset possession change event.", "id", assetChangeEventId)
 	}
-	return nil
+	return assetChangeEventId, nil
 }
 
-func (ep *EventProcessor) storeAssetOwnershipChangeEvent(eventData []byte, eventId int) error {
+func (ep *EventProcessor) storeAssetOwnershipChangeEvent(eventData []byte, eventId int) (int, error) {
 	decodedEvent, err := DecodeAssetOwnershipChangeEvent(eventData)
 	if err != nil {
-		return errors.Wrap(err, "decoding event")
+		return -1, errors.Wrap(err, "decoding asset ownership change")
 	}
 	assetChangeEvent := decodedEvent.GetAssetOwnershipChangeEvent()
 	sourceId, err := ep.repository.GetOrCreateEntity(assetChangeEvent.GetSourceId())
 	if err != nil {
-		return err
+		return -1, errors.Wrap(err, "storing asset ownership change")
 	}
 	destinationId, err := ep.repository.GetOrCreateEntity(assetChangeEvent.GetDestId())
 	if err != nil {
-		return err
+		return -1, errors.Wrap(err, "storing asset ownership change")
 	}
 	assetId, err := ep.repository.GetOrCreateAsset(assetChangeEvent.GetIssuerId(), assetChangeEvent.GetAssetName())
 	if err != nil {
-		return err
+		return -1, errors.Wrap(err, "storing asset ownership change")
 	}
 	assetChangeEventId, err := ep.repository.GetOrCreateAssetChangeEvent(eventId, assetId, sourceId, destinationId, assetChangeEvent.GetNumberOfShares())
 	if err != nil {
-		return err
+		return -1, errors.Wrap(err, "storing asset ownership change")
 	} else {
 		slog.Debug("Stored asset ownership change event.", "id", assetChangeEventId)
 	}
-	return nil
+	return assetChangeEventId, nil
 }
 
-func (ep *EventProcessor) storeQuTransferEvent(eventData []byte, eventId int) error {
+func (ep *EventProcessor) storeQuTransferEvent(eventData []byte, eventId int) (int, error) {
 	decodedEvent, err := DecodeQuTransferEvent(eventData)
 	if err != nil {
-		return errors.Wrap(err, "decoding event")
+		return -1, errors.Wrap(err, "decoding qu transfer")
 	}
 	transferEvent := decodedEvent.GetQuTransferEvent()
 
 	sourceId, err := ep.repository.GetOrCreateEntity(transferEvent.GetSourceId())
 	if err != nil {
-		return errors.Wrap(err, "getting source entity")
+		return -1, errors.Wrap(err, "storing qu transfer")
 	}
 	destinationId, err := ep.repository.GetOrCreateEntity(transferEvent.GetDestId())
 	if err != nil {
-		return errors.Wrap(err, "getting destination entity")
+		return -1, errors.Wrap(err, "storing qu transfer")
 	}
 
 	transferId, err := ep.repository.GetOrCreateQuTransferEvent(eventId, sourceId, destinationId, transferEvent.GetAmount())
 	if err != nil {
-		return errors.Wrap(err, "creating qu transfer event")
+		return -1, errors.Wrap(err, "storing qu transfer")
 	} else {
 		slog.Debug("Stored qu transfer event.", "id", transferId)
 	}
-	return nil
+	return transferId, nil
 }
 
 func filterRelevantEvents(events []*eventspb.Event) []*eventspb.Event {
