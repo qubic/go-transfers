@@ -76,7 +76,7 @@ func (ep *EventProcessor) ProcessTickEvents(tickEvents *eventspb.TickEvents) (in
 					slog.Error("Could not process event.", "eventType", event.EventType, "eventData", eventData, "error", err)
 					return -1, errors.Wrap(err, "storing event details")
 				} else {
-					slog.Info("Stored event:", "id", dbId, "type", eventType, "transaction", transactionId)
+					slog.Info("Stored event:", "id", dbId, "type", eventType, "transaction", transactionEvents.GetTxId())
 					count++
 				}
 			}
