@@ -256,7 +256,11 @@ func isRelevantEvent(ev *eventspb.Event) bool {
 		}
 		transferEvent := decodedEvent.GetQuTransferEvent()
 		// ignore qu transfers that go to AAA or come from AAA (mainly mining deposits but could be burning, too)
-		return !(strings.HasPrefix(transferEvent.GetSourceId(), AAA) || strings.HasPrefix(transferEvent.GetDestId(), AAA))
+		ignore := strings.HasPrefix(transferEvent.GetSourceId(), AAA) || strings.HasPrefix(transferEvent.GetDestId(), AAA)
+		if ignore {
+			slog.Info("Ignoring qu transfer event.", "src", transferEvent.GetSourceId(), "dest", transferEvent.GetDestId(), "eventId", ev.Header.EventId)
+		}
+		return !ignore
 	}
 	return eventType == events.EventTypeAssetPossessionChange ||
 		eventType == events.EventTypeAssetOwnershipChange ||

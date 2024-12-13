@@ -119,7 +119,7 @@ func (es *EventService) ProcessTickEvents(from, toExcl int) (int, error) {
 			numberOfTransactionEvents++
 		}
 
-		slog.Info("Processed:", "tick", tick, "relevant", eventCount, "transactions", numberOfTransactionEvents, "events", numberOfTotalEvents)
+		slog.Info("Processed:", "tick", tick, "stored", eventCount, "transactions", numberOfTransactionEvents, "events", numberOfTotalEvents)
 		processed = tick
 	}
 	return processed, nil
