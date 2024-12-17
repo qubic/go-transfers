@@ -30,12 +30,12 @@ func main() {
 func run() error {
 
 	// load config
-	configuration, err := loadConfig()
+	configuration, err := loadConfig() // FIXME try to use default setup without env config lib
 	if err != nil {
 		return errors.Wrap(err, "loading config")
 	}
 
-	// logging
+	// logging // TODO add switch for disabling log files
 	configureLogging(configuration.Log)
 	defer slog.MustClose()
 	defer slog.MustFlush()
@@ -47,7 +47,7 @@ func run() error {
 	}
 
 	dbc := configuration.Database
-	pgDb, err := db.CreateDatabase(dbc.User, dbc.Pass, dbc.Name, dbc.Host, dbc.Port, dbc.MaxOpen, dbc.MaxIdle)
+	pgDb, err := db.Create(dbc.User, dbc.Pass, dbc.Name, dbc.Host, dbc.Port, dbc.MaxOpen, dbc.MaxIdle)
 	if err != nil {
 		return errors.Wrap(err, "opening database")
 	}

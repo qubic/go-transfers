@@ -6,7 +6,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func CreateDatabase(user, pass, dbName, host string, port, maxOpen, maxIdle int) (*sqlx.DB, error) {
+func Create(user, pass, dbName, host string, port, maxOpen, maxIdle int) (*sqlx.DB, error) {
 	connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s",
 		host, port, user, pass, dbName)
 	pgDb, err := sqlx.Connect("postgres", connectionString)

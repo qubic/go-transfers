@@ -149,25 +149,25 @@ func (r *PgRepository) updateNumericValue(key string, value int) error {
 	return errors.Wrap(err, "updating numeric value")
 }
 
-// entity
-
-func (r *PgRepository) GetOrCreateEntity(identity string) (int, error) {
-	id, err := r.getEntityId(identity)
-	if errors.Is(err, sql.ErrNoRows) { // insert if not found
-		id, err = r.insertEntity(identity)
-	}
-	return id, errors.Wrap(err, "getting or creating entity")
-}
-
-func (r *PgRepository) insertEntity(identity string) (int, error) {
-	insertSql := `insert into entities (identity) values ($1) returning id;`
-	return insert(r.db, insertSql, identity)
-}
-
-func (r *PgRepository) getEntityId(identity string) (int, error) {
-	selectSql := `select id from entities where identity= $1;`
-	return getId(r.db, selectSql, identity)
-}
+// entity // TODO refactor for all tables
+//
+//func (r *PgRepository) GetOrCreateEntity(identity string) (int, error) {
+//	id, err := r.getEntityId(identity)
+//	if errors.Is(err, sql.ErrNoRows) { // insert if not found
+//		id, err = r.insertEntity(identity)
+//	}
+//	return id, errors.Wrap(err, "getting or creating entity")
+//}
+//
+//func (r *PgRepository) insertEntity(identity string) (int, error) {
+//	insertSql := `insert into entities (identity) values ($1) returning id;`
+//	return insert(r.db, insertSql, identity)
+//}
+//
+//func (r *PgRepository) getEntityId(identity string) (int, error) {
+//	selectSql := `select id from entities where identity= $1;`
+//	return getId(r.db, selectSql, identity)
+//}
 
 // asset
 
@@ -175,9 +175,8 @@ func (r *PgRepository) GetOrCreateAsset(issuer, name string) (int, error) {
 	id, err := r.getAssetId(issuer, name)
 	if errors.Is(err, sql.ErrNoRows) { // not found create
 		return r.createAsset(issuer, name)
-	} else {
-		return id, errors.Wrap(err, "getting or creating asset")
 	}
+	return id, errors.Wrap(err, "getting or creating asset")
 }
 
 func (r *PgRepository) createAsset(issuer, name string) (int, error) {

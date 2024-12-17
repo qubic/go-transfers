@@ -59,7 +59,7 @@ var loadedConfig *Config = nil
 func GetConfig(path ...string) (*Config, error) {
 
 	if loadedConfig == nil {
-		lock.Lock()
+		lock.Lock() // FIXME remove me
 		defer lock.Unlock()
 		if loadedConfig == nil {
 			if path == nil || len(path) == 0 {

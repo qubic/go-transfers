@@ -40,6 +40,7 @@ func (es *EventService) SyncInLoop() {
 	var count uint64
 	loopTick := time.Tick(time.Second * 1)
 	for range loopTick {
+
 		err := es.sync(count)
 		count++
 		time.Sleep(time.Second)
@@ -51,13 +52,17 @@ func (es *EventService) SyncInLoop() {
 
 func (es *EventService) sync(count uint64) error {
 
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5) // TODO make timeout configurable
+	defer cancel()
+
+	// TODO extract getting start tick into separate method
 	processedTick, err := es.repository.GetLatestTick()
 	if err != nil {
 		slog.Error(err.Error())
 		return errors.Wrap(err, "getting processed tick")
 	}
 
-	tickInfo, err := es.client.GetTickInfo(context.Background())
+	tickInfo, err := es.client.GetTickInfo(ctx)
 	if err != nil {
 		return errors.Wrap(err, "getting tick info")
 	}
@@ -67,7 +72,7 @@ func (es *EventService) sync(count uint64) error {
 	}
 	startTick := int(math.Max(float64(processedTick+1), float64(tickInfo.InitialTick)))
 
-	status, err := es.client.GetStatus(context.Background())
+	status, err := es.client.GetStatus(context.Background()) // FIXME replace
 	if err != nil {
 		return errors.Wrap(err, "getting event status.")
 	}
@@ -78,19 +83,23 @@ func (es *EventService) sync(count uint64) error {
 		slog.Info("Status:", "processed", processedTick, "current", tickInfo.CurrentTick, "available", status.AvailableTick)
 	}
 
-	if startTick <= endTick { // ok
-		slog.Debug("Syncing:", "from", startTick, "to", endTick)
-		tick, err := es.ProcessTickEvents(startTick, endTick+1) // end tick exclusive
+	if startTick > endTick {
+		return nil
+	}
+
+	//if startTick <= endTick { // ok
+	slog.Debug("Syncing:", "from", startTick, "to", endTick)
+	tick, err := es.ProcessTickEvents(startTick, endTick+1) // end tick exclusive
+	if err != nil {
+		return errors.Wrap(err, "processing tick events")
+	}
+	if tick > 0 { // TODO is that needed?
+		err := es.repository.UpdateLatestTick(tick)
 		if err != nil {
-			return errors.Wrap(err, "processing tick events")
-		}
-		if tick > 0 {
-			err := es.repository.UpdateLatestTick(tick)
-			if err != nil {
-				return errors.Wrap(err, "updating processed tick")
-			}
+			return errors.Wrap(err, "updating processed tick")
 		}
 	}
+	//}
 	return nil
 }
 
@@ -102,6 +111,7 @@ func (es *EventService) ProcessTickEvents(from, toExcl int) (int, error) {
 			return -1, errors.New("uint32 overflow")
 		}
 
+		// FIXME replace context
 		tickEvents, err := es.client.GetEvents(context.Background(), uint32(tick)) // attention. need to cast here.
 		if err != nil {
 			slog.Warn("Error getting events.", "tick", tick)

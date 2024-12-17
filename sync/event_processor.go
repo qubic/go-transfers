@@ -61,15 +61,16 @@ func (ep *EventProcessor) ProcessTickEvents(tickEvents *eventspb.TickEvents) (in
 				}
 				var dbId int
 				eventType := uint8(event.EventType)
-				if eventType == events.EventTypeQuTransfer {
+				switch {
+				case eventType == events.EventTypeQuTransfer:
 					dbId, err = ep.storeQuTransferEvent(eventData, eventId)
-				} else if eventType == events.EventTypeAssetOwnershipChange {
+				case eventType == events.EventTypeAssetOwnershipChange:
 					dbId, err = ep.storeAssetOwnershipChangeEvent(eventData, eventId)
-				} else if eventType == events.EventTypeAssetPossessionChange {
+				case eventType == events.EventTypeAssetPossessionChange:
 					dbId, err = ep.storeAssetPossessionChangeEvent(eventData, eventId)
-				} else if eventType == events.EventTypeAssetIssuance {
+				case eventType == events.EventTypeAssetIssuance:
 					dbId, err = ep.storeAssetIssuanceEvent(eventData, eventId)
-				} else {
+				default:
 					err = errors.New("unexpected unhandled event type.")
 				}
 				if err != nil {
