@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 	"os"
 	"path/filepath"
-	"sync"
 )
 
 const envPrefix = "QUBIC_TRANSFERS"
@@ -50,48 +49,37 @@ type Config struct {
 	Log      LogConfig
 }
 
-var lock = &sync.Mutex{}
-var loadedConfig *Config = nil
-
 // GetConfig get config by reading configuration parameters. If available .env files
 // will be loaded and used as defaults. See https://github.com/joho/godotenv?tab=readme-ov-file#precedence--conventions
 // for used conventions.
 func GetConfig(path ...string) (*Config, error) {
 
-	if loadedConfig == nil {
-		lock.Lock() // FIXME remove me
-		defer lock.Unlock()
-		if loadedConfig == nil {
-			if path == nil || len(path) == 0 {
-				loadEnv([]string{""})
-			} else {
-				loadEnv(path)
+	if path == nil || len(path) == 0 {
+		loadEnv([]string{""})
+	} else {
+		loadEnv(path)
+	}
+	var config Config
+	err := conf.Parse(os.Args[1:], envPrefix, &config)
+	if err != nil {
+		if errors.Is(err, conf.ErrHelpWanted) {
+			usage, usageErr := conf.Usage(envPrefix, &config)
+			if usageErr != nil {
+				slog.Error("generating usage message", "errors", usageErr)
 			}
-			var config Config
-			err := conf.Parse(os.Args[1:], envPrefix, &config)
-			if err != nil {
-				if errors.Is(err, conf.ErrHelpWanted) {
-					usage, usageErr := conf.Usage(envPrefix, &config)
-					if usageErr != nil {
-						slog.Error("generating usage message", "errors", usageErr)
-					}
-					fmt.Println(usage)
-					os.Exit(0)
-				}
-				if errors.Is(err, conf.ErrVersionWanted) {
-					version, versionErr := conf.VersionString(envPrefix, &config)
-					if versionErr != nil {
-						slog.Error("generating version message", "errors", versionErr)
-					}
-					fmt.Println(version)
-					os.Exit(0)
-				}
-				return &config, err
+			fmt.Println(usage)
+			os.Exit(0)
+		}
+		if errors.Is(err, conf.ErrVersionWanted) {
+			version, versionErr := conf.VersionString(envPrefix, &config)
+			if versionErr != nil {
+				slog.Error("generating version message", "errors", versionErr)
 			}
-			loadedConfig = &config
+			fmt.Println(version)
+			os.Exit(0)
 		}
 	}
-	return loadedConfig, nil
+	return &config, err
 }
 
 // loadEnv for conventions see https://github.com/bkeepers/dotenv?tab=readme-ov-file#customizing-rails
