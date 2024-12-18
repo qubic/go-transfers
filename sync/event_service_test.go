@@ -39,7 +39,7 @@ func (eventClient *FakeEventClient) GetTickInfo(_ context.Context) (*client.Tick
 type FakeRepository struct {
 }
 
-func (f FakeRepository) GetLatestTick() (int, error) {
+func (f FakeRepository) GetLatestTick(_ context.Context) (int, error) {
 	return processedTestTick, nil
 }
 

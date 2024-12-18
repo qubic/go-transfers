@@ -17,7 +17,7 @@ type EventClient interface {
 }
 
 type TickNumberRepository interface {
-	GetLatestTick() (int, error)
+	GetLatestTick(ctx context.Context) (int, error)
 	UpdateLatestTick(tickNumber int) error
 }
 
@@ -56,7 +56,7 @@ func (es *EventService) sync(count uint64) error {
 	defer cancel()
 
 	// TODO extract getting start tick into separate method
-	processedTick, err := es.repository.GetLatestTick()
+	processedTick, err := es.repository.GetLatestTick(ctx)
 	if err != nil {
 		slog.Error(err.Error())
 		return errors.Wrap(err, "getting processed tick")

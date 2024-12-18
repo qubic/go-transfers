@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"flag"
 	"github.com/gookit/slog"
 	"github.com/stretchr/testify/assert"
@@ -14,23 +15,23 @@ import (
 type FakeRepository struct {
 }
 
-func (f FakeRepository) GetAssetChangeEventsForEntity(_ string) ([]*proto.AssetChangeEvent, error) {
+func (f FakeRepository) GetAssetChangeEventsForEntity(_ context.Context, _ string) ([]*proto.AssetChangeEvent, error) {
 	return []*proto.AssetChangeEvent{}, nil
 }
 
-func (f FakeRepository) GetQuTransferEventsForEntity(_ string) ([]*proto.QuTransferEvent, error) {
+func (f FakeRepository) GetQuTransferEventsForEntity(_ context.Context, _ string) ([]*proto.QuTransferEvent, error) {
 	return []*proto.QuTransferEvent{}, nil
 }
 
-func (f FakeRepository) GetAssetChangeEventsForTick(_ int) ([]*proto.AssetChangeEvent, error) {
+func (f FakeRepository) GetAssetChangeEventsForTick(_ context.Context, _ int) ([]*proto.AssetChangeEvent, error) {
 	return []*proto.AssetChangeEvent{}, nil
 }
 
-func (f FakeRepository) GetQuTransferEventsForTick(_ int) ([]*proto.QuTransferEvent, error) {
+func (f FakeRepository) GetQuTransferEventsForTick(_ context.Context, _ int) ([]*proto.QuTransferEvent, error) {
 	return []*proto.QuTransferEvent{}, nil
 }
 
-func (f FakeRepository) GetLatestTick() (int, error) {
+func (f FakeRepository) GetLatestTick(_ context.Context) (int, error) {
 	return 1234, nil
 }
 
@@ -104,6 +105,7 @@ func TestServer_GetQuTransfersForEntity_givenInvalidIdentity_thenBadRequest(t *t
 	callServiceVerifyStatus(t, "http://localhost:8003/api/v1/entities/BLAH/events/qu-transfer", http.StatusBadRequest)
 }
 
+//goland:noinspection SpellCheckingInspection
 func Test_IsValidIdentity(t *testing.T) {
 	assert.False(t, isValidIdentity("cfBMEMZOIDEXQAUXYYSZIURADQLAPWPMNJXQSNVQZAHYVOPYUKKJBJUCTVJL"))
 	assert.False(t, isValidIdentity("CFBMEMZOIDEXQAUXYYSZIURADQL123PMNJXQSNVQZAHYVOPYUKKJBJUCTVJL"))

@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"github.com/gookit/slog"
 	"github.com/jmoiron/sqlx"
@@ -20,7 +21,7 @@ func NewRepository(db *sqlx.DB) *PgRepository {
 
 // qu transfer events
 
-func (r *PgRepository) GetQuTransferEventsForTick(tickNumber int) ([]*proto.QuTransferEvent, error) {
+func (r *PgRepository) GetQuTransferEventsForTick(ctx context.Context, tickNumber int) ([]*proto.QuTransferEvent, error) {
 	selectSql := `select src.identity sourceId, 
        		dst.identity destinationId,
        		ev.amount,
@@ -36,14 +37,14 @@ func (r *PgRepository) GetQuTransferEventsForTick(tickNumber int) ([]*proto.QuTr
 		where ti.tick_number = $1 and e.event_type = 0
 		order by tick_number desc;`
 	var events []*proto.QuTransferEvent
-	err := r.db.Select(&events, selectSql, tickNumber)
+	err := r.db.SelectContext(ctx, &events, selectSql, tickNumber)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting asset change events")
 	}
 	return events, nil
 }
 
-func (r *PgRepository) GetQuTransferEventsForEntity(identity string) ([]*proto.QuTransferEvent, error) {
+func (r *PgRepository) GetQuTransferEventsForEntity(ctx context.Context, identity string) ([]*proto.QuTransferEvent, error) {
 	selectSql := `select src.identity sourceId, 
        		dst.identity destinationId,
        		ev.amount,
@@ -61,7 +62,7 @@ func (r *PgRepository) GetQuTransferEventsForEntity(identity string) ([]*proto.Q
 		order by tick_number desc
 		limit 100;`
 	var events []*proto.QuTransferEvent
-	err := r.db.Select(&events, selectSql, identity)
+	err := r.db.SelectContext(ctx, &events, selectSql, identity)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting asset change events")
 	}
@@ -70,7 +71,7 @@ func (r *PgRepository) GetQuTransferEventsForEntity(identity string) ([]*proto.Q
 
 // asset change events
 
-func (r *PgRepository) GetAssetChangeEventsForTick(tickNumber int) ([]*proto.AssetChangeEvent, error) {
+func (r *PgRepository) GetAssetChangeEventsForTick(ctx context.Context, tickNumber int) ([]*proto.AssetChangeEvent, error) {
 	selectSql := `select src.identity sourceId, 
        		dst.identity destinationId, 
        		issuer.identity issuerId,
@@ -91,14 +92,14 @@ func (r *PgRepository) GetAssetChangeEventsForTick(tickNumber int) ([]*proto.Ass
 		and e.event_type in (2, 3)
 		order by tick_number desc;`
 	var events []*proto.AssetChangeEvent
-	err := r.db.Select(&events, selectSql, tickNumber)
+	err := r.db.SelectContext(ctx, &events, selectSql, tickNumber)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting asset change events")
 	}
 	return events, nil
 }
 
-func (r *PgRepository) GetAssetChangeEventsForEntity(identity string) ([]*proto.AssetChangeEvent, error) {
+func (r *PgRepository) GetAssetChangeEventsForEntity(ctx context.Context, identity string) ([]*proto.AssetChangeEvent, error) {
 	selectSql := `select src.identity sourceId, 
        		dst.identity destinationId, 
        		issuer.identity issuerId,
@@ -119,7 +120,7 @@ func (r *PgRepository) GetAssetChangeEventsForEntity(identity string) ([]*proto.
 		and (src.identity = $1 or dst.identity = $1)
 		order by tick_number desc;`
 	var events []*proto.AssetChangeEvent
-	err := r.db.Select(&events, selectSql, identity)
+	err := r.db.SelectContext(ctx, &events, selectSql, identity)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting asset change events")
 	}
@@ -128,18 +129,18 @@ func (r *PgRepository) GetAssetChangeEventsForEntity(identity string) ([]*proto.
 
 // key value
 
-func (r *PgRepository) GetLatestTick() (int, error) {
-	return r.getNumericValue("tick")
+func (r *PgRepository) GetLatestTick(ctx context.Context) (int, error) {
+	return r.getNumericValue(ctx, "tick")
 }
 
 func (r *PgRepository) UpdateLatestTick(tickNumber int) error {
 	return r.updateNumericValue("tick", tickNumber)
 }
 
-func (r *PgRepository) getNumericValue(key string) (int, error) {
+func (r *PgRepository) getNumericValue(ctx context.Context, key string) (int, error) {
 	selectSql := `select numeric_value from key_values where key = $1`
 	var value int
-	err := r.db.Get(&value, selectSql, key)
+	err := r.db.GetContext(ctx, &value, selectSql, key)
 	return value, errors.Wrap(err, "getting numeric value")
 }
 

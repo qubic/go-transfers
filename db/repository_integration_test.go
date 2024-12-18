@@ -315,18 +315,18 @@ func TestPgRepository_GetOrCreateAssetIssuanceEvent_GivenEvent_ThenGet(t *testin
 }
 
 func TestPgRepository_GetLatestTick(t *testing.T) {
-	value, err := repository.GetLatestTick()
+	value, err := repository.GetLatestTick(context.Background())
 	assert.Nil(t, err)
 	assert.True(t, value >= 0)
 }
 
 func TestPgRepository_UpdatedNumericValue(t *testing.T) {
-	original, err := repository.GetLatestTick()
+	original, err := repository.GetLatestTick(context.Background())
 	assert.Nil(t, err)
 
 	err = repository.UpdateLatestTick(42)
 	assert.Nil(t, err)
-	updated, err := repository.GetLatestTick()
+	updated, err := repository.GetLatestTick(context.Background())
 	assert.Nil(t, err)
 	assert.Equal(t, 42, updated)
 
@@ -341,7 +341,7 @@ func TestPgRepository_GetAssetChangeEventsForTick(t *testing.T) {
 	assetEventId, err := repository.insertAssetChangeEvent(eventId, assetId, sourceEntityId, destinationEntityId, 123456789)
 	assert.Nil(t, err)
 
-	events, err := repository.GetAssetChangeEventsForTick(testTickNumber)
+	events, err := repository.GetAssetChangeEventsForTick(context.Background(), testTickNumber)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(events))
 	assert.Equal(t, &proto.AssetChangeEvent{
@@ -368,7 +368,7 @@ func TestPgRepository_GetQuTransferEventsForTick(t *testing.T) {
 	transferId, err := repository.GetOrCreateQuTransferEvent(eventId, sourceEntityId, destinationEntityId, 123_456_789_012_345)
 	assert.Nil(t, err)
 
-	events, err := repository.GetQuTransferEventsForTick(testTickNumber)
+	events, err := repository.GetQuTransferEventsForTick(context.Background(), testTickNumber)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(events))
 	assert.Equal(t, &proto.QuTransferEvent{
@@ -394,7 +394,7 @@ func TestPgRepository_GetQuTransferEventsForEntity(t *testing.T) {
 	transferId, err := repository.GetOrCreateQuTransferEvent(eventId, sourceEntityId, destinationEntityId, 123_456_789_012_345)
 	assert.Nil(t, err)
 
-	events, err := repository.GetQuTransferEventsForEntity(testSourceIdentity)
+	events, err := repository.GetQuTransferEventsForEntity(context.Background(), testSourceIdentity)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(events))
 	assert.Equal(t, &proto.QuTransferEvent{
@@ -406,7 +406,7 @@ func TestPgRepository_GetQuTransferEventsForEntity(t *testing.T) {
 		EventType:       0,
 	}, events[0])
 
-	events, err = repository.GetQuTransferEventsForEntity(testDestinationEntity)
+	events, err = repository.GetQuTransferEventsForEntity(context.Background(), testDestinationEntity)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(events))
 	assert.Equal(t, &proto.QuTransferEvent{
@@ -433,7 +433,7 @@ func TestPgRepository_GetAssetChangeEventsForEntity(t *testing.T) {
 	assetEventId, err := repository.insertAssetChangeEvent(eventId, assetId, sourceEntityId, destinationEntityId, 123456789)
 	assert.Nil(t, err)
 
-	events, err := repository.GetAssetChangeEventsForEntity(testSourceIdentity)
+	events, err := repository.GetAssetChangeEventsForEntity(context.Background(), testSourceIdentity)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(events))
 	assert.Equal(t, &proto.AssetChangeEvent{
@@ -447,7 +447,7 @@ func TestPgRepository_GetAssetChangeEventsForEntity(t *testing.T) {
 		EventType:       2,
 	}, events[0])
 
-	events, err = repository.GetAssetChangeEventsForEntity(testDestinationEntity)
+	events, err = repository.GetAssetChangeEventsForEntity(context.Background(), testDestinationEntity)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(events))
 	assert.Equal(t, &proto.AssetChangeEvent{
@@ -467,7 +467,7 @@ func TestPgRepository_GetAssetChangeEventsForEntity(t *testing.T) {
 	deleteEntity(destinationEntityId, t)
 }
 
-// test data set ups and clean ups
+// test data set-ups and clean-ups
 
 func setupTransactionTestData(t *testing.T) (int, int) {
 	tickId, err := repository.GetOrCreateTick(testTickNumber)
