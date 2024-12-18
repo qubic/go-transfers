@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"github.com/gookit/slog"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -17,15 +18,15 @@ func NewRepository(db *sqlx.DB) *PgRepository {
 
 // helper methods
 
-func getId(db *sqlx.DB, statement string, args ...interface{}) (int, error) {
+func getId(ctx context.Context, db *sqlx.DB, statement string, args ...interface{}) (int, error) {
 	var id int
-	err := db.Get(&id, statement, args...)
+	err := db.GetContext(ctx, &id, statement, args...)
 	return id, err
 }
 
-func insert(db *sqlx.DB, statement string, args ...interface{}) (int, error) {
+func insert(ctx context.Context, db *sqlx.DB, statement string, args ...interface{}) (int, error) {
 	var id int
-	err := db.Get(&id, statement, args...)
+	err := db.GetContext(ctx, &id, statement, args...)
 	return id, err
 }
 

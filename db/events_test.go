@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -8,7 +9,7 @@ import (
 func TestPgRepository_GetOrCreateEvent_GivenNoEvent_ThenInsert(t *testing.T) {
 	tickId, transactionId := setupTransactionTestData(t)
 
-	eventId, err := repository.GetOrCreateEvent(transactionId, 1, 2, "foo")
+	eventId, err := repository.GetOrCreateEvent(context.Background(), transactionId, 1, 2, "foo")
 	assert.Nil(t, err)
 	assert.Greater(t, eventId, 0)
 
@@ -19,10 +20,10 @@ func TestPgRepository_GetOrCreateEvent_GivenNoEvent_ThenInsert(t *testing.T) {
 
 func TestPgRepository_GetOrCreateEvent_GivenEvent_ThenGet(t *testing.T) {
 	tickId, transactionId := setupTransactionTestData(t)
-	eventId, err := repository.insertEvent(transactionId, 1, 2, "foo")
+	eventId, err := repository.insertEvent(context.Background(), transactionId, 1, 2, "foo")
 	assert.Nil(t, err)
 
-	reloaded, err := repository.GetOrCreateEvent(transactionId, 1, 2, "foo")
+	reloaded, err := repository.GetOrCreateEvent(context.Background(), transactionId, 1, 2, "foo")
 	assert.Nil(t, err)
 	assert.Equal(t, eventId, reloaded)
 
@@ -37,7 +38,7 @@ func TestPgRepository_GetOrCreateQuTransferEvent_GivenNoTransferEvent_ThenCreate
 	tickId, transactionId, eventId := setupEventTestData(t, 0)
 	sourceEntityId, destinationEntityId := setupSourceAndDestinationEntity(t)
 
-	transferId, err := repository.GetOrCreateQuTransferEvent(eventId, sourceEntityId, destinationEntityId, 123456789)
+	transferId, err := repository.GetOrCreateQuTransferEvent(context.Background(), eventId, sourceEntityId, destinationEntityId, 123456789)
 	assert.Nil(t, err)
 	assert.Greater(t, transferId, 0)
 
@@ -51,10 +52,10 @@ func TestPgRepository_GetOrCreateQuTransferEvent_GivenNoTransferEvent_ThenCreate
 func TestPgRepository_GetOrCreateQuTransferEvent_GivenTransferEvent_ThenGet(t *testing.T) {
 	tickId, transactionId, eventId := setupEventTestData(t, 0)
 	sourceEntityId, destinationEntityId := setupSourceAndDestinationEntity(t)
-	transferId, err := repository.insertQuTransferEvent(eventId, sourceEntityId, destinationEntityId, 123456789)
+	transferId, err := repository.insertQuTransferEvent(context.Background(), eventId, sourceEntityId, destinationEntityId, 123456789)
 	assert.Nil(t, err)
 
-	reloaded, err := repository.GetOrCreateQuTransferEvent(eventId, sourceEntityId, destinationEntityId, 123)
+	reloaded, err := repository.GetOrCreateQuTransferEvent(context.Background(), eventId, sourceEntityId, destinationEntityId, 123)
 	assert.Nil(t, err)
 	assert.Equal(t, transferId, reloaded)
 
@@ -70,10 +71,10 @@ func TestPgRepository_GetOrCreateQuTransferEvent_GivenTransferEvent_ThenGet(t *t
 func TestPgRepository_GetOrCreateAssetChangeEvent_GivenNone_ThenCreate(t *testing.T) {
 	tickId, transactionId, eventId := setupEventTestData(t, 2)
 	sourceEntityId, destinationEntityId := setupSourceAndDestinationEntity(t)
-	assetId, err := repository.getAssetId(AAA, "QX") // don't clean up
+	assetId, err := repository.getAssetId(context.Background(), AAA, "QX") // don't clean up
 	assert.Nil(t, err)
 
-	assetEventId, err := repository.GetOrCreateAssetChangeEvent(eventId, assetId, sourceEntityId, destinationEntityId, 123456789)
+	assetEventId, err := repository.GetOrCreateAssetChangeEvent(context.Background(), eventId, assetId, sourceEntityId, destinationEntityId, 123456789)
 	assert.Nil(t, err)
 	assert.Greater(t, assetEventId, 0)
 
@@ -87,12 +88,12 @@ func TestPgRepository_GetOrCreateAssetChangeEvent_GivenNone_ThenCreate(t *testin
 func TestPgRepository_GetOrCreateAssetChangeEvent_GivenEntry_ThenGet(t *testing.T) {
 	tickId, transactionId, eventId := setupEventTestData(t, 3)
 	sourceEntityId, destinationEntityId := setupSourceAndDestinationEntity(t)
-	assetId, err := repository.getAssetId(AAA, "QX") // don't clean up
+	assetId, err := repository.getAssetId(context.Background(), AAA, "QX") // don't clean up
 	assert.Nil(t, err)
 
-	assetEventId, err := repository.insertAssetChangeEvent(eventId, assetId, sourceEntityId, destinationEntityId, 123456789)
+	assetEventId, err := repository.insertAssetChangeEvent(context.Background(), eventId, assetId, sourceEntityId, destinationEntityId, 123456789)
 
-	reloaded, err := repository.GetOrCreateAssetChangeEvent(eventId, assetId, sourceEntityId, destinationEntityId, 123456789)
+	reloaded, err := repository.GetOrCreateAssetChangeEvent(context.Background(), eventId, assetId, sourceEntityId, destinationEntityId, 123456789)
 	assert.Nil(t, err)
 	assert.Equal(t, assetEventId, reloaded)
 
@@ -107,12 +108,12 @@ func TestPgRepository_GetOrCreateAssetChangeEvent_GivenEntry_ThenGet(t *testing.
 
 func TestPgRepository_GetOrCreateAssetIssuanceEvent_GivenNone_ThenCreate(t *testing.T) {
 	tickId, transactionId, eventId := setupEventTestData(t, 1)
-	issuerId, err := repository.GetOrCreateEntity("TEST_ISSUER_ID")
+	issuerId, err := repository.GetOrCreateEntity(context.Background(), "TEST_ISSUER_ID")
 	assert.Nil(t, err)
-	assetId, err := repository.GetOrCreateAsset("TEST_ISSUER_ID", "A-NAME")
+	assetId, err := repository.GetOrCreateAsset(context.Background(), "TEST_ISSUER_ID", "A-NAME")
 	assert.Nil(t, err)
 
-	issuanceEventId, err := repository.GetOrCreateAssetIssuanceEvent(eventId, assetId, 1234567890, []byte{0, 0, 0, 0, 0, 0, 0}, 0)
+	issuanceEventId, err := repository.GetOrCreateAssetIssuanceEvent(context.Background(), eventId, assetId, 1234567890, []byte{0, 0, 0, 0, 0, 0, 0}, 0)
 	assert.Nil(t, err)
 	assert.Greater(t, issuanceEventId, 0)
 
@@ -124,14 +125,14 @@ func TestPgRepository_GetOrCreateAssetIssuanceEvent_GivenNone_ThenCreate(t *test
 
 func TestPgRepository_GetOrCreateAssetIssuanceEvent_GivenEvent_ThenGet(t *testing.T) {
 	tickId, transactionId, eventId := setupEventTestData(t, 1)
-	issuerId, err := repository.GetOrCreateEntity("TEST_ISSUER_ID")
+	issuerId, err := repository.GetOrCreateEntity(context.Background(), "TEST_ISSUER_ID")
 	assert.Nil(t, err)
-	assetId, err := repository.GetOrCreateAsset("TEST_ISSUER_ID", "A-NAME")
+	assetId, err := repository.GetOrCreateAsset(context.Background(), "TEST_ISSUER_ID", "A-NAME")
 	assert.Nil(t, err)
-	issuanceEventId, err := repository.insertAssetIssuanceEvent(eventId, assetId, 1234567890, []byte{0, 0, 1, 0, 0, 0, 0}, 2)
+	issuanceEventId, err := repository.insertAssetIssuanceEvent(context.Background(), eventId, assetId, 1234567890, []byte{0, 0, 1, 0, 0, 0, 0}, 2)
 	assert.Nil(t, err)
 
-	reloaded, err := repository.GetOrCreateAssetIssuanceEvent(eventId, assetId, 0, nil, 0)
+	reloaded, err := repository.GetOrCreateAssetIssuanceEvent(context.Background(), eventId, assetId, 0, nil, 0)
 	assert.Nil(t, err)
 	assert.Equal(t, issuanceEventId, reloaded)
 

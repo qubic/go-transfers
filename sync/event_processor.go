@@ -1,6 +1,7 @@
 package sync
 
 import (
+	"context"
 	"encoding/base64"
 	"github.com/gookit/slog"
 	"github.com/pkg/errors"
@@ -12,14 +13,14 @@ import (
 const AAA = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
 type EventRepository interface {
-	GetOrCreateEntity(identity string) (int, error)
-	GetOrCreateAsset(issuer, name string) (int, error)
-	GetOrCreateTick(tickNumber uint32) (int, error)
-	GetOrCreateTransaction(hash string, tickId int) (int, error)
-	GetOrCreateEvent(transactionId int, eventEventId uint64, eventType uint32, eventData string) (int, error)
-	GetOrCreateQuTransferEvent(eventId int, sourceEntityId int, destinationEntityId int, amount uint64) (int, error)
-	GetOrCreateAssetChangeEvent(eventId, assetId, sourceEntityId, destinationEntityId int, numberOfShares int64) (int, error)
-	GetOrCreateAssetIssuanceEvent(eventId int, assetId int, numberOfShares int64, unitOfMeasurement []byte, numberOfDecimalPlaces uint32) (int, error)
+	GetOrCreateEntity(ctx context.Context, identity string) (int, error)
+	GetOrCreateAsset(ctx context.Context, issuer, name string) (int, error)
+	GetOrCreateTick(ctx context.Context, tickNumber uint32) (int, error)
+	GetOrCreateTransaction(ctx context.Context, hash string, tickId int) (int, error)
+	GetOrCreateEvent(ctx context.Context, transactionId int, eventEventId uint64, eventType uint32, eventData string) (int, error)
+	GetOrCreateQuTransferEvent(ctx context.Context, eventId int, sourceEntityId int, destinationEntityId int, amount uint64) (int, error)
+	GetOrCreateAssetChangeEvent(ctx context.Context, eventId, assetId, sourceEntityId, destinationEntityId int, numberOfShares int64) (int, error)
+	GetOrCreateAssetIssuanceEvent(ctx context.Context, eventId int, assetId int, numberOfShares int64, unitOfMeasurement []byte, numberOfDecimalPlaces uint32) (int, error)
 }
 
 type EventProcessor struct {
@@ -33,7 +34,7 @@ func NewEventProcessor(repository EventRepository) *EventProcessor {
 	return &ep
 }
 
-func (ep *EventProcessor) ProcessTickEvents(tickEvents *eventspb.TickEvents) (int, error) {
+func (ep *EventProcessor) ProcessTickEvents(ctx context.Context, tickEvents *eventspb.TickEvents) (int, error) {
 
 	var count int
 	for _, transactionEvents := range tickEvents.TxEvents {
@@ -44,14 +45,14 @@ func (ep *EventProcessor) ProcessTickEvents(tickEvents *eventspb.TickEvents) (in
 
 			slog.Debug("Processing events of transaction.", "hash", transactionEvents.TxId, "count", len(relevantEvents))
 
-			transactionId, err := ep.storeTransaction(tickEvents.GetTick(), transactionEvents.GetTxId())
+			transactionId, err := ep.storeTransaction(ctx, tickEvents.GetTick(), transactionEvents.GetTxId())
 			if err != nil {
 				return -1, errors.Wrap(err, "storing transaction")
 			}
 
 			for _, event := range relevantEvents {
 				slog.Debug("Processing event.", "event", event)
-				eventId, err := ep.getOrCreateEvent(event, transactionId)
+				eventId, err := ep.getOrCreateEvent(ctx, event, transactionId)
 				if err != nil {
 					return -1, errors.Wrap(err, "storing event")
 				}
@@ -63,13 +64,13 @@ func (ep *EventProcessor) ProcessTickEvents(tickEvents *eventspb.TickEvents) (in
 				eventType := uint8(event.EventType)
 				switch {
 				case eventType == events.EventTypeQuTransfer:
-					dbId, err = ep.storeQuTransferEvent(eventData, eventId)
+					dbId, err = ep.storeQuTransferEvent(ctx, eventData, eventId)
 				case eventType == events.EventTypeAssetOwnershipChange:
-					dbId, err = ep.storeAssetOwnershipChangeEvent(eventData, eventId)
+					dbId, err = ep.storeAssetOwnershipChangeEvent(ctx, eventData, eventId)
 				case eventType == events.EventTypeAssetPossessionChange:
-					dbId, err = ep.storeAssetPossessionChangeEvent(eventData, eventId)
+					dbId, err = ep.storeAssetPossessionChangeEvent(ctx, eventData, eventId)
 				case eventType == events.EventTypeAssetIssuance:
-					dbId, err = ep.storeAssetIssuanceEvent(eventData, eventId)
+					dbId, err = ep.storeAssetIssuanceEvent(ctx, eventData, eventId)
 				default:
 					err = errors.New("unexpected unhandled event type.")
 				}
@@ -86,32 +87,32 @@ func (ep *EventProcessor) ProcessTickEvents(tickEvents *eventspb.TickEvents) (in
 	return count, nil
 }
 
-func (ep *EventProcessor) getTransactionId(tickNumber uint32, hash string) (int, error) {
-	transactionId, err := ep.storeTransaction(tickNumber, hash)
+func (ep *EventProcessor) getTransactionId(ctx context.Context, tickNumber uint32, hash string) (int, error) {
+	transactionId, err := ep.storeTransaction(ctx, tickNumber, hash)
 	if err != nil {
 		return -1, errors.Wrap(err, "storing transaction")
 	}
 	return transactionId, nil
 }
 
-func (ep *EventProcessor) storeTransaction(tick uint32, transactionHash string) (int, error) {
-	tickId, err := ep.repository.GetOrCreateTick(tick)
+func (ep *EventProcessor) storeTransaction(ctx context.Context, tick uint32, transactionHash string) (int, error) {
+	tickId, err := ep.repository.GetOrCreateTick(ctx, tick)
 	if err != nil {
 		return -1, errors.Wrap(err, "storing tick")
 	}
-	transactionId, err := ep.repository.GetOrCreateTransaction(transactionHash, tickId)
+	transactionId, err := ep.repository.GetOrCreateTransaction(ctx, transactionHash, tickId)
 	if err != nil {
 		return -1, errors.Wrap(err, "storing transaction")
 	}
 	return transactionId, nil
 }
 
-func (ep *EventProcessor) getOrCreateEvent(event *eventspb.Event, transactionId int) (int, error) {
+func (ep *EventProcessor) getOrCreateEvent(ctx context.Context, event *eventspb.Event, transactionId int) (int, error) {
 	eventEventId, err := ep.getEventId(event)
 	if err != nil {
 		return -1, errors.Wrap(err, "extracting event id")
 	}
-	eventId, err := ep.repository.GetOrCreateEvent(transactionId, eventEventId, event.EventType, event.EventData)
+	eventId, err := ep.repository.GetOrCreateEvent(ctx, transactionId, eventEventId, event.EventType, event.EventData)
 	if err != nil {
 		return -1, errors.Wrap(err, "get  or creating event")
 	}
@@ -128,17 +129,17 @@ func (ep *EventProcessor) getEventId(event *eventspb.Event) (uint64, error) {
 
 }
 
-func (ep *EventProcessor) storeAssetIssuanceEvent(eventData []byte, eventId int) (int, error) {
+func (ep *EventProcessor) storeAssetIssuanceEvent(ctx context.Context, eventData []byte, eventId int) (int, error) {
 	decodedEvent, err := DecodeAssetIssuanceEvent(eventData)
 	if err != nil {
 		return -1, errors.Wrap(err, "decoding asset issuance")
 	}
 	assetIssuanceEvent := decodedEvent.GetAssetIssuanceEvent()
-	assetId, err := ep.repository.GetOrCreateAsset(assetIssuanceEvent.GetSourceId(), assetIssuanceEvent.GetAssetName())
+	assetId, err := ep.repository.GetOrCreateAsset(ctx, assetIssuanceEvent.GetSourceId(), assetIssuanceEvent.GetAssetName())
 	if err != nil {
 		return -1, errors.Wrap(err, "storing asset issuance")
 	}
-	assetIssuanceEventId, err := ep.repository.GetOrCreateAssetIssuanceEvent(eventId, assetId,
+	assetIssuanceEventId, err := ep.repository.GetOrCreateAssetIssuanceEvent(ctx, eventId, assetId,
 		assetIssuanceEvent.GetNumberOfShares(),
 		assetIssuanceEvent.GetMeasurementUnit(),
 		assetIssuanceEvent.GetNumberOfDecimals())
@@ -150,25 +151,25 @@ func (ep *EventProcessor) storeAssetIssuanceEvent(eventData []byte, eventId int)
 	return assetIssuanceEventId, nil
 }
 
-func (ep *EventProcessor) storeAssetPossessionChangeEvent(eventData []byte, eventId int) (int, error) {
+func (ep *EventProcessor) storeAssetPossessionChangeEvent(ctx context.Context, eventData []byte, eventId int) (int, error) {
 	decodedEvent, err := DecodeAssetPossessionChangeEvent(eventData)
 	if err != nil {
 		return -1, errors.Wrap(err, "decoding asset possession change")
 	}
 	assetChangeEvent := decodedEvent.GetAssetPossessionChangeEvent()
-	sourceId, err := ep.repository.GetOrCreateEntity(assetChangeEvent.GetSourceId())
+	sourceId, err := ep.repository.GetOrCreateEntity(ctx, assetChangeEvent.GetSourceId())
 	if err != nil {
 		return -1, errors.Wrap(err, "storing asset possession change")
 	}
-	destinationId, err := ep.repository.GetOrCreateEntity(assetChangeEvent.GetDestId())
+	destinationId, err := ep.repository.GetOrCreateEntity(ctx, assetChangeEvent.GetDestId())
 	if err != nil {
 		return -1, errors.Wrap(err, "storing asset possession change")
 	}
-	assetId, err := ep.repository.GetOrCreateAsset(assetChangeEvent.GetIssuerId(), assetChangeEvent.GetAssetName())
+	assetId, err := ep.repository.GetOrCreateAsset(ctx, assetChangeEvent.GetIssuerId(), assetChangeEvent.GetAssetName())
 	if err != nil {
 		return -1, errors.Wrap(err, "storing asset possession change")
 	}
-	assetChangeEventId, err := ep.repository.GetOrCreateAssetChangeEvent(eventId, assetId, sourceId, destinationId, assetChangeEvent.GetNumberOfShares())
+	assetChangeEventId, err := ep.repository.GetOrCreateAssetChangeEvent(ctx, eventId, assetId, sourceId, destinationId, assetChangeEvent.GetNumberOfShares())
 	if err != nil {
 		return -1, errors.Wrap(err, "storing asset possession change")
 	} else {
@@ -177,25 +178,25 @@ func (ep *EventProcessor) storeAssetPossessionChangeEvent(eventData []byte, even
 	return assetChangeEventId, nil
 }
 
-func (ep *EventProcessor) storeAssetOwnershipChangeEvent(eventData []byte, eventId int) (int, error) {
+func (ep *EventProcessor) storeAssetOwnershipChangeEvent(ctx context.Context, eventData []byte, eventId int) (int, error) {
 	decodedEvent, err := DecodeAssetOwnershipChangeEvent(eventData)
 	if err != nil {
 		return -1, errors.Wrap(err, "decoding asset ownership change")
 	}
 	assetChangeEvent := decodedEvent.GetAssetOwnershipChangeEvent()
-	sourceId, err := ep.repository.GetOrCreateEntity(assetChangeEvent.GetSourceId())
+	sourceId, err := ep.repository.GetOrCreateEntity(ctx, assetChangeEvent.GetSourceId())
 	if err != nil {
 		return -1, errors.Wrap(err, "storing asset ownership change")
 	}
-	destinationId, err := ep.repository.GetOrCreateEntity(assetChangeEvent.GetDestId())
+	destinationId, err := ep.repository.GetOrCreateEntity(ctx, assetChangeEvent.GetDestId())
 	if err != nil {
 		return -1, errors.Wrap(err, "storing asset ownership change")
 	}
-	assetId, err := ep.repository.GetOrCreateAsset(assetChangeEvent.GetIssuerId(), assetChangeEvent.GetAssetName())
+	assetId, err := ep.repository.GetOrCreateAsset(ctx, assetChangeEvent.GetIssuerId(), assetChangeEvent.GetAssetName())
 	if err != nil {
 		return -1, errors.Wrap(err, "storing asset ownership change")
 	}
-	assetChangeEventId, err := ep.repository.GetOrCreateAssetChangeEvent(eventId, assetId, sourceId, destinationId, assetChangeEvent.GetNumberOfShares())
+	assetChangeEventId, err := ep.repository.GetOrCreateAssetChangeEvent(ctx, eventId, assetId, sourceId, destinationId, assetChangeEvent.GetNumberOfShares())
 	if err != nil {
 		return -1, errors.Wrap(err, "storing asset ownership change")
 	} else {
@@ -204,23 +205,23 @@ func (ep *EventProcessor) storeAssetOwnershipChangeEvent(eventData []byte, event
 	return assetChangeEventId, nil
 }
 
-func (ep *EventProcessor) storeQuTransferEvent(eventData []byte, eventId int) (int, error) {
+func (ep *EventProcessor) storeQuTransferEvent(ctx context.Context, eventData []byte, eventId int) (int, error) {
 	decodedEvent, err := DecodeQuTransferEvent(eventData)
 	if err != nil {
 		return -1, errors.Wrap(err, "decoding qu transfer")
 	}
 	transferEvent := decodedEvent.GetQuTransferEvent()
 
-	sourceId, err := ep.repository.GetOrCreateEntity(transferEvent.GetSourceId())
+	sourceId, err := ep.repository.GetOrCreateEntity(ctx, transferEvent.GetSourceId())
 	if err != nil {
 		return -1, errors.Wrap(err, "storing qu transfer")
 	}
-	destinationId, err := ep.repository.GetOrCreateEntity(transferEvent.GetDestId())
+	destinationId, err := ep.repository.GetOrCreateEntity(ctx, transferEvent.GetDestId())
 	if err != nil {
 		return -1, errors.Wrap(err, "storing qu transfer")
 	}
 
-	transferId, err := ep.repository.GetOrCreateQuTransferEvent(eventId, sourceId, destinationId, transferEvent.GetAmount())
+	transferId, err := ep.repository.GetOrCreateQuTransferEvent(ctx, eventId, sourceId, destinationId, transferEvent.GetAmount())
 	if err != nil {
 		return -1, errors.Wrap(err, "storing qu transfer")
 	} else {

@@ -30,9 +30,9 @@ const (
 // test data set-ups and clean-ups
 
 func setupTransactionTestData(t *testing.T) (int, int) {
-	tickId, err := repository.GetOrCreateTick(testTickNumber)
+	tickId, err := repository.GetOrCreateTick(context.Background(), testTickNumber)
 	assert.Nil(t, err)
-	transactionId, err := repository.GetOrCreateTransaction(testTransactionHash, tickId)
+	transactionId, err := repository.GetOrCreateTransaction(context.Background(), testTransactionHash, tickId)
 	assert.Nil(t, err)
 	return tickId, transactionId
 }
@@ -44,7 +44,7 @@ func cleanUpTransactionTestData(t *testing.T, transactionId int, tickId int) {
 
 func setupEventTestData(t *testing.T, eventType uint32) (int, int, int) {
 	tickId, transactionId := setupTransactionTestData(t)
-	eventId, err := repository.GetOrCreateEvent(transactionId, 1, eventType, "foo")
+	eventId, err := repository.GetOrCreateEvent(context.Background(), transactionId, 1, eventType, "foo")
 	assert.Nil(t, err)
 	return tickId, transactionId, eventId
 }
@@ -55,9 +55,9 @@ func cleanupEventTestData(t *testing.T, transactionId int, tickId int, eventId i
 }
 
 func setupSourceAndDestinationEntity(t *testing.T) (int, int) {
-	entityId1, err := repository.GetOrCreateEntity(testSourceIdentity)
+	entityId1, err := repository.GetOrCreateEntity(context.Background(), testSourceIdentity)
 	assert.Nil(t, err)
-	entityId2, err := repository.GetOrCreateEntity(testDestinationEntity)
+	entityId2, err := repository.GetOrCreateEntity(context.Background(), testDestinationEntity)
 	assert.Nil(t, err)
 	return entityId1, entityId2
 }

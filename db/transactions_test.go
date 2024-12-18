@@ -1,16 +1,17 @@
 package db
 
 import (
+	"context"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 // transaction
 func TestPgRepository_GetOrCreateTransaction_GivenNoTransaction_ThenInsert(t *testing.T) {
-	tickId, err := repository.GetOrCreateTick(42)
+	tickId, err := repository.GetOrCreateTick(context.Background(), 42)
 	assert.Nil(t, err)
 
-	transactionId, err := repository.GetOrCreateTransaction("test-hash", tickId)
+	transactionId, err := repository.GetOrCreateTransaction(context.Background(), "test-hash", tickId)
 	assert.Nil(t, err)
 	assert.Greater(t, transactionId, 0)
 
@@ -20,14 +21,14 @@ func TestPgRepository_GetOrCreateTransaction_GivenNoTransaction_ThenInsert(t *te
 }
 
 func TestPgRepository_GetOrCreateTransaction_GivenTransaction_ThenGet(t *testing.T) {
-	tickId, err := repository.GetOrCreateTick(42)
+	tickId, err := repository.GetOrCreateTick(context.Background(), 42)
 	assert.Nil(t, err)
 
-	transactionId, err := repository.insertTransaction("test-hash", tickId)
+	transactionId, err := repository.insertTransaction(context.Background(), "test-hash", tickId)
 	assert.Nil(t, err)
 	assert.Greater(t, transactionId, 0)
 
-	reloaded, err := repository.GetOrCreateTransaction("test-hash", tickId)
+	reloaded, err := repository.GetOrCreateTransaction(context.Background(), "test-hash", tickId)
 	assert.Nil(t, err)
 	assert.Equal(t, transactionId, reloaded)
 

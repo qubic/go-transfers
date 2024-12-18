@@ -29,7 +29,7 @@ var (
 
 func TestEventService_GetEventRange(t *testing.T) {
 
-	tick, err := eventService.ProcessTickEvents(17603769, 17603770)
+	tick, err := eventService.ProcessTickEvents(context.Background(), 17603769, 17603770)
 	if err != nil {
 		t.Error(err)
 	}

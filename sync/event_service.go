@@ -18,7 +18,7 @@ type EventClient interface {
 
 type TickNumberRepository interface {
 	GetLatestTick(ctx context.Context) (int, error)
-	UpdateLatestTick(tickNumber int) error
+	UpdateLatestTick(ctx context.Context, tickNumber int) error
 }
 
 type EventService struct {
@@ -72,7 +72,7 @@ func (es *EventService) sync(count uint64) error {
 	}
 	startTick := int(math.Max(float64(processedTick+1), float64(tickInfo.InitialTick)))
 
-	status, err := es.client.GetStatus(context.Background()) // FIXME replace
+	status, err := es.client.GetStatus(ctx)
 	if err != nil {
 		return errors.Wrap(err, "getting event status.")
 	}
@@ -89,12 +89,12 @@ func (es *EventService) sync(count uint64) error {
 
 	//if startTick <= endTick { // ok
 	slog.Debug("Syncing:", "from", startTick, "to", endTick)
-	tick, err := es.ProcessTickEvents(startTick, endTick+1) // end tick exclusive
+	tick, err := es.ProcessTickEvents(ctx, startTick, endTick+1) // end tick exclusive
 	if err != nil {
 		return errors.Wrap(err, "processing tick events")
 	}
 	if tick > 0 { // TODO is that needed?
-		err := es.repository.UpdateLatestTick(tick)
+		err := es.repository.UpdateLatestTick(ctx, tick)
 		if err != nil {
 			return errors.Wrap(err, "updating processed tick")
 		}
@@ -103,7 +103,7 @@ func (es *EventService) sync(count uint64) error {
 	return nil
 }
 
-func (es *EventService) ProcessTickEvents(from, toExcl int) (int, error) {
+func (es *EventService) ProcessTickEvents(ctx context.Context, from, toExcl int) (int, error) {
 	processed := -1
 	for tick := from; tick < toExcl; tick++ {
 
@@ -111,14 +111,13 @@ func (es *EventService) ProcessTickEvents(from, toExcl int) (int, error) {
 			return -1, errors.New("uint32 overflow")
 		}
 
-		// FIXME replace context
-		tickEvents, err := es.client.GetEvents(context.Background(), uint32(tick)) // attention. need to cast here.
+		tickEvents, err := es.client.GetEvents(ctx, uint32(tick)) // attention. need to cast here.
 		if err != nil {
 			slog.Warn("Error getting events.", "tick", tick)
 			return -1, errors.Wrap(err, "Error getting events for tick.")
 		}
 
-		eventCount, err := es.eventProcessor.ProcessTickEvents(tickEvents)
+		eventCount, err := es.eventProcessor.ProcessTickEvents(ctx, tickEvents)
 		if err != nil {
 			return -1, errors.Wrap(err, "processing tick events.")
 		}

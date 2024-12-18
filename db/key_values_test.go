@@ -16,11 +16,11 @@ func TestPgRepository_UpdatedNumericValue(t *testing.T) {
 	original, err := repository.GetLatestTick(context.Background())
 	assert.Nil(t, err)
 
-	err = repository.UpdateLatestTick(42)
+	err = repository.UpdateLatestTick(context.Background(), 42)
 	assert.Nil(t, err)
 	updated, err := repository.GetLatestTick(context.Background())
 	assert.Nil(t, err)
 	assert.Equal(t, 42, updated)
 
-	_ = repository.UpdateLatestTick(original) // clean up
+	_ = repository.UpdateLatestTick(context.Background(), original) // clean up
 }

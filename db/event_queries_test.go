@@ -10,9 +10,9 @@ import (
 func TestPgRepository_GetAssetChangeEventsForTick(t *testing.T) {
 	tickId, transactionId, eventId := setupEventTestData(t, 2)
 	sourceEntityId, destinationEntityId := setupSourceAndDestinationEntity(t)
-	assetId, err := repository.getAssetId(AAA, "QX") // don't clean up
+	assetId, err := repository.getAssetId(context.Background(), AAA, "QX") // don't clean up
 	assert.Nil(t, err)
-	assetEventId, err := repository.insertAssetChangeEvent(eventId, assetId, sourceEntityId, destinationEntityId, 123456789)
+	assetEventId, err := repository.insertAssetChangeEvent(context.Background(), eventId, assetId, sourceEntityId, destinationEntityId, 123456789)
 	assert.Nil(t, err)
 
 	events, err := repository.GetAssetChangeEventsForTick(context.Background(), testTickNumber)
@@ -39,7 +39,7 @@ func TestPgRepository_GetQuTransferEventsForTick(t *testing.T) {
 	tickId, transactionId, eventId := setupEventTestData(t, 0)
 	sourceEntityId, destinationEntityId := setupSourceAndDestinationEntity(t)
 
-	transferId, err := repository.GetOrCreateQuTransferEvent(eventId, sourceEntityId, destinationEntityId, 123_456_789_012_345)
+	transferId, err := repository.GetOrCreateQuTransferEvent(context.Background(), eventId, sourceEntityId, destinationEntityId, 123_456_789_012_345)
 	assert.Nil(t, err)
 
 	events, err := repository.GetQuTransferEventsForTick(context.Background(), testTickNumber)
@@ -65,7 +65,7 @@ func TestPgRepository_GetQuTransferEventsForEntity(t *testing.T) {
 	tickId, transactionId, eventId := setupEventTestData(t, 0)
 	sourceEntityId, destinationEntityId := setupSourceAndDestinationEntity(t)
 
-	transferId, err := repository.GetOrCreateQuTransferEvent(eventId, sourceEntityId, destinationEntityId, 123_456_789_012_345)
+	transferId, err := repository.GetOrCreateQuTransferEvent(context.Background(), eventId, sourceEntityId, destinationEntityId, 123_456_789_012_345)
 	assert.Nil(t, err)
 
 	events, err := repository.GetQuTransferEventsForEntity(context.Background(), testSourceIdentity)
@@ -102,9 +102,9 @@ func TestPgRepository_GetQuTransferEventsForEntity(t *testing.T) {
 func TestPgRepository_GetAssetChangeEventsForEntity(t *testing.T) {
 	tickId, transactionId, eventId := setupEventTestData(t, 2)
 	sourceEntityId, destinationEntityId := setupSourceAndDestinationEntity(t)
-	assetId, err := repository.getAssetId(AAA, "QX") // don't clean up
+	assetId, err := repository.getAssetId(context.Background(), AAA, "QX") // don't clean up
 	assert.Nil(t, err)
-	assetEventId, err := repository.insertAssetChangeEvent(eventId, assetId, sourceEntityId, destinationEntityId, 123456789)
+	assetEventId, err := repository.insertAssetChangeEvent(context.Background(), eventId, assetId, sourceEntityId, destinationEntityId, 123456789)
 	assert.Nil(t, err)
 
 	events, err := repository.GetAssetChangeEventsForEntity(context.Background(), testSourceIdentity)
