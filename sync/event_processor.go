@@ -45,7 +45,7 @@ func (ep *EventProcessor) ProcessTickEvents(ctx context.Context, tickEvents *eve
 
 			slog.Debug("Processing events of transaction.", "hash", transactionEvents.TxId, "count", len(relevantEvents))
 
-			transactionId, err := ep.storeTransaction(ctx, tickEvents.GetTick(), transactionEvents.GetTxId())
+			transactionId, err := ep.getOrCreateTransaction(ctx, tickEvents.GetTick(), transactionEvents.GetTxId())
 			if err != nil {
 				return -1, errors.Wrap(err, "storing transaction")
 			}
@@ -88,14 +88,14 @@ func (ep *EventProcessor) ProcessTickEvents(ctx context.Context, tickEvents *eve
 }
 
 func (ep *EventProcessor) getTransactionId(ctx context.Context, tickNumber uint32, hash string) (int, error) {
-	transactionId, err := ep.storeTransaction(ctx, tickNumber, hash)
+	transactionId, err := ep.getOrCreateTransaction(ctx, tickNumber, hash)
 	if err != nil {
 		return -1, errors.Wrap(err, "storing transaction")
 	}
 	return transactionId, nil
 }
 
-func (ep *EventProcessor) storeTransaction(ctx context.Context, tick uint32, transactionHash string) (int, error) {
+func (ep *EventProcessor) getOrCreateTransaction(ctx context.Context, tick uint32, transactionHash string) (int, error) {
 	tickId, err := ep.repository.GetOrCreateTick(ctx, tick)
 	if err != nil {
 		return -1, errors.Wrap(err, "storing tick")

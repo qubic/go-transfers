@@ -28,13 +28,8 @@ var (
 )
 
 func TestEventService_GetEventRange(t *testing.T) {
-
-	tick, err := eventService.ProcessTickEvents(context.Background(), 17603769, 17603770)
-	if err != nil {
-		t.Error(err)
-	}
-	assert.Equal(t, 17603769, tick)
-
+	err := eventService.processTickEventsRange(context.Background(), 17603769, 17603770)
+	assert.NoError(t, err)
 }
 
 // test setup
