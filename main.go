@@ -12,7 +12,6 @@ import (
 	"github.com/pkg/errors"
 	"go-transfers/api"
 	"go-transfers/client"
-	"go-transfers/config"
 	"go-transfers/db"
 	"go-transfers/sync"
 	"log"
@@ -27,13 +26,76 @@ func main() {
 	}
 }
 
+type ServerConfig struct {
+	HttpHost string `conf:"default:0.0.0.0:8000"`
+	GrpcHost string `conf:"default:0.0.0.0:8001"`
+}
+
+type ClientConfig struct {
+	EventApiUrl string `conf:"required"`
+	CoreApiUrl  string `conf:"required"`
+}
+
+type DatabaseConfig struct {
+	User    string `conf:"default:qxtr"`
+	Pass    string `conf:"noprint,required"`
+	Host    string `conf:"default:localhost"`
+	Port    int    `conf:"default:5432"`
+	Name    string `conf:"default:qxtr"`
+	MaxIdle int    `conf:"default:10"`
+	MaxOpen int    `conf:"default:10"`
+}
+
+type AppConfig struct {
+	SyncEnabled bool `conf:"default:true"`
+	ApiEnabled  bool `conf:"default:true"`
+}
+
+type LogConfig struct {
+	Level     string `conf:"default:Info"`
+	FileError bool   `conf:"default:false"`
+	FileApp   bool   `conf:"default:false"`
+}
+
+type Config struct {
+	App      AppConfig
+	Server   ServerConfig
+	Client   ClientConfig
+	Database DatabaseConfig
+	Log      LogConfig
+}
+
+const envPrefix = "QUBIC_TRANSFERS"
+
 func run() error {
 
 	// load config
-	configuration, err := loadConfig() // FIXME try to use default setup without env config lib
-	if err != nil {
-		return errors.Wrap(err, "loading config")
+	var configuration Config
+	if err := conf.Parse(os.Args[1:], envPrefix, &configuration); err != nil {
+		switch {
+		case errors.Is(err, conf.ErrHelpWanted):
+			usage, err := conf.Usage(envPrefix, &configuration)
+			if err != nil {
+				return errors.Wrap(err, "generating config usage")
+			}
+			fmt.Println(usage)
+			return nil
+		case errors.Is(err, conf.ErrVersionWanted):
+			version, err := conf.VersionString(envPrefix, &configuration)
+			if err != nil {
+				return errors.Wrap(err, "generating config version")
+			}
+			fmt.Println(version)
+			return nil
+		}
+		return errors.Wrap(err, "parsing config")
 	}
+
+	out, err := conf.String(&configuration)
+	if err != nil {
+		return errors.Wrap(err, "generating config for output")
+	}
+	log.Printf("main: Config :\n%v\n", out)
 
 	// logging
 	configureLogging(configuration.Log)
@@ -94,7 +156,7 @@ func run() error {
 	}
 }
 
-func configureLogging(config config.LogConfig) {
+func configureLogging(config LogConfig) {
 	const LogTimeFormat = "2006-01-02 15:04:05"
 
 	// console
@@ -142,17 +204,7 @@ func configureLogging(config config.LogConfig) {
 	slog.Info("Log level set:", logLevel)
 }
 
-func migrateDatabase(config *config.DatabaseConfig) error {
+func migrateDatabase(config *DatabaseConfig) error {
 	connectionString := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", config.User, config.Pass, config.Host, config.Port, config.Name)
 	return db.Migrate(connectionString)
-}
-
-func loadConfig() (*config.Config, error) {
-	configuration, configErr := config.GetConfig()
-	if configErr == nil {
-		if out, toStringErr := conf.String(configuration); toStringErr == nil {
-			slog.Info(fmt.Sprintf("applied configuration properties.\n%v\n", out))
-		}
-	}
-	return configuration, configErr
 }

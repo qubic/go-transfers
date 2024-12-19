@@ -6,9 +6,10 @@ package client
 import (
 	"context"
 	"flag"
+	"github.com/ardanlabs/conf"
 	"github.com/gookit/slog"
+	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
-	"go-transfers/config"
 	"os"
 	"testing"
 )
@@ -48,15 +49,25 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	c, err := config.GetConfig("..")
+	const envPrefix = "QUBIC_TRANSFERS"
+	err := godotenv.Load("../.env.local")
 	if err != nil {
-		slog.Error("error getting config")
+		slog.Info("Using no env file")
+	}
+	var config struct {
+		Client struct {
+			EventApiUrl string `conf:"required"`
+			CoreApiUrl  string `conf:"required"`
+		}
+	}
+	err = conf.Parse(os.Args[1:], envPrefix, &config)
+	if err != nil {
+		slog.Error("error getting config", "err", err)
 		os.Exit(-1)
 	}
-
-	eventClient, err = NewIntegrationEventClient(c.Client.EventApiUrl, c.Client.CoreApiUrl)
+	eventClient, err = NewIntegrationEventClient(config.Client.EventApiUrl, config.Client.CoreApiUrl)
 	if err != nil {
-		slog.Error("error creating event client")
+		slog.Error("error creating event client", "err", err)
 		os.Exit(-1)
 	}
 }

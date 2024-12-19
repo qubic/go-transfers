@@ -27,7 +27,7 @@ migrate -source file://path/to/migrations -database postgres://localhost:5432/da
 
 ### Configure environment
 
-Environment variables need to be set. See [.env](./.env) for variables and defaults.
+Environment variables need to be set or necessary values need to be passed as command line arguments.
 
 ## Build & Run
 

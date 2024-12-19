@@ -6,14 +6,15 @@ package sync
 import (
 	"context"
 	"flag"
+	"github.com/ardanlabs/conf"
 	"github.com/gookit/slog"
 	"github.com/jmoiron/sqlx"
+	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 	"go-transfers/client"
-	"go-transfers/config"
 	"go-transfers/db"
 	"os"
 	"testing"
@@ -54,14 +55,24 @@ func tearDown() {
 }
 
 func setup() {
-	c, err := config.GetConfig("..")
+	err := godotenv.Load("../.env.local")
 	if err != nil {
-		slog.Error("error getting config")
+		slog.Info("Using no env file")
+	}
+	var config struct {
+		Client struct {
+			EventApiUrl string `conf:"required"`
+			CoreApiUrl  string `conf:"required"`
+		}
+	}
+	err = conf.Parse(os.Args[1:], "QUBIC_TRANSFERS", &config)
+	if err != nil {
+		slog.Error("getting config", "err", err)
 		os.Exit(-1)
 	}
-	eventClient, err = client.NewIntegrationEventClient(c.Client.EventApiUrl, c.Client.CoreApiUrl)
+	eventClient, err = client.NewIntegrationEventClient(config.Client.EventApiUrl, config.Client.CoreApiUrl)
 	if err != nil {
-		slog.Error("error creating event client")
+		slog.Error("creating event client")
 		os.Exit(-1)
 	}
 
