@@ -179,8 +179,7 @@
         },
         "numberOfShares": {
           "type": "string",
-          "format": "uint64",
-          "title": "will be serialized as string over rest"
+          "format": "uint64"
         },
         "transactionHash": {
           "type": "string"
@@ -211,11 +210,31 @@
         }
       }
     },
+    "protoComponent": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "details": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "protoHealthResponse": {
       "type": "object",
       "properties": {
         "status": {
           "type": "string"
+        },
+        "components": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/protoComponent"
+          }
         }
       }
     },
@@ -230,8 +249,7 @@
         },
         "amount": {
           "type": "string",
-          "format": "uint64",
-          "title": "will be serialized as string over rest"
+          "format": "uint64"
         },
         "transactionHash": {
           "type": "string"

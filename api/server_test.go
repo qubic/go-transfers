@@ -5,6 +5,7 @@ import (
 	"flag"
 	"github.com/gookit/slog"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go-transfers/proto"
 	"io"
 	"net/http"
@@ -68,9 +69,9 @@ func TestServer_whenHealth_thenReturnStatusUp(t *testing.T) {
 		t.Error(err)
 	}
 
-	if string(body) != "{\"status\":\"UP\"}" {
-		t.Errorf("Unexpected response body: [%s]", body)
-	}
+	slog.Info(string(body))
+
+	require.JSONEq(t, `{ "status":"UP", "components": { "db": { "status":"UP", "details": { "latestTick": "1234" } } } }`, string(body))
 }
 
 func TestServer_GetAssetTransfersForTick_thenReturnAssetTransfers(t *testing.T) {

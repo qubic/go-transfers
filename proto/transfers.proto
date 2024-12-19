@@ -8,6 +8,12 @@ import "google/protobuf/empty.proto";
 
 message HealthResponse {
   string status = 1;
+  map<string, Component> components = 2;
+}
+
+message Component {
+  string status = 1;
+  map<string, string> details = 2;
 }
 
 message TickRequest {
@@ -31,7 +37,7 @@ message QuTransferEventsResponse {
 message QuTransferEvent {
   string sourceId = 1;
   string destinationId = 2;
-  uint64 amount = 3; // will be serialized as string over rest
+  uint64 amount = 3;
   string transactionHash = 4;
   uint32 tick = 5;
   uint32 eventType = 6;
@@ -42,7 +48,7 @@ message AssetChangeEvent {
   string destinationId = 2;
   string issuerId = 3;
   string name = 4;
-  uint64 numberOfShares = 5; // will be serialized as string over rest
+  uint64 numberOfShares = 5;
   string transactionHash = 6;
   uint32 tick = 7;
   uint32 eventType = 8;

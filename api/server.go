@@ -16,6 +16,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -44,10 +45,25 @@ func NewServer(grpcAdders, httpAddress string, repository Repository) *Server {
 
 }
 
-func (s *Server) Health(_ context.Context, _ *emptypb.Empty) (*proto.HealthResponse, error) {
+func (s *Server) Health(ctx context.Context, _ *emptypb.Empty) (*proto.HealthResponse, error) {
+	serviceStatus := "UP"
+	tickNumber, err := s.repository.GetLatestTick(ctx)
+	dbStatus := "UP"
+	if err != nil {
+		serviceStatus = "ERROR"
+		dbStatus = "ERROR"
+	}
 	return &proto.HealthResponse{
-		Status: "UP",
-	}, nil // TODO add db connectivity check
+		Status: serviceStatus,
+		Components: map[string]*proto.Component{
+			"db": {
+				Status: dbStatus,
+				Details: map[string]string{
+					"latestTick": strconv.Itoa(tickNumber),
+				},
+			},
+		},
+	}, nil
 }
 
 func (s *Server) GetAssetChangeEventsForTick(ctx context.Context, request *proto.TickRequest) (*proto.AssetChangeEventsResponse, error) {
