@@ -52,7 +52,7 @@ func (es *EventService) SyncInLoop() {
 
 func (es *EventService) sync(count uint64) error {
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5) // TODO make timeout configurable
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
 	startTick, currentTick, err := es.calculateStartTick(ctx)
