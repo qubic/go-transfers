@@ -38,7 +38,9 @@ type AppConfig struct {
 }
 
 type LogConfig struct {
-	Level string
+	Level     string
+	FileError bool
+	FileApp   bool
 }
 
 type Config struct {

@@ -27,9 +27,9 @@ func Migrate(connectionString string) error {
 		return errors.Wrap(err, "running migrations")
 	}
 	version, dirty, _ := migs.Version() // we don't care about error here. we only log info.
-	slog.Info("db migrations applied:", "version", version, "dirty", dirty,
+	slog.Info("Db migrations applied:", "version", version, "dirty", dirty,
 		"changed", !errors.Is(err, migrate.ErrNoChange))
 	sErr, dErr := migs.Close()
-	slog.Info("db migration close", "source-errors", sErr, "db-errors", dErr)
+	slog.Info("Db migrations closed:", "source-errors", sErr, "db-errors", dErr)
 	return nil
 }

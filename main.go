@@ -35,7 +35,7 @@ func run() error {
 		return errors.Wrap(err, "loading config")
 	}
 
-	// logging // TODO add switch for disabling log files
+	// logging
 	configureLogging(configuration.Log)
 	defer slog.MustClose()
 	defer slog.MustFlush()
@@ -106,35 +106,40 @@ func configureLogging(config config.LogConfig) {
 	logLevel := slog.LevelByName(config.Level)
 	slog.SetLogLevel(logLevel)
 
-	// error log
-	h1 := handler.NewBuilder().
-		WithLogfile("./error.log").
-		WithLogLevels(slog.DangerLevels).
-		WithRotateTime(rotatefile.EveryDay).
-		WithBuffMode(handler.BuffModeLine).
-		WithCompress(true).
-		Build()
-	errorFormatter := slog.NewTextFormatter()
-	errorFormatter.TimeFormat = LogTimeFormat
-	h1.SetFormatter(errorFormatter) // log complete data
+	if config.FileApp {
+		// normal application log
+		appLogHandler := handler.NewBuilder().
+			WithLogfile("./application.log").
+			WithLogLevels(slog.Levels{slog.InfoLevel, slog.PanicLevel, slog.FatalLevel, slog.ErrorLevel, slog.WarnLevel}).
+			WithRotateTime(rotatefile.EveryDay).
+			WithBuffMode(handler.BuffModeLine).
+			WithCompress(true).
+			Build()
+		infoFormatter := slog.NewTextFormatter()
+		infoFormatter.TimeFormat = LogTimeFormat
+		infoFormatter.SetTemplate(logTemplate)
+		appLogHandler.SetFormatter(infoFormatter)
+		slog.PushHandler(appLogHandler)
+		slog.Info("Enabled application log.")
+	}
 
-	// normal application log
-	h2 := handler.NewBuilder().
-		WithLogfile("./application.log").
-		WithLogLevels(slog.Levels{slog.InfoLevel, slog.PanicLevel, slog.FatalLevel, slog.ErrorLevel, slog.WarnLevel}).
-		WithRotateTime(rotatefile.EveryDay).
-		WithBuffMode(handler.BuffModeLine).
-		WithCompress(true).
-		Build()
-	infoFormatter := slog.NewTextFormatter()
-	infoFormatter.TimeFormat = LogTimeFormat
-	infoFormatter.SetTemplate(logTemplate)
-	h2.SetFormatter(infoFormatter)
+	if config.FileError {
+		// error log
+		errLogHandler := handler.NewBuilder().
+			WithLogfile("./error.log").
+			WithLogLevels(slog.DangerLevels).
+			WithRotateTime(rotatefile.EveryDay).
+			WithBuffMode(handler.BuffModeLine).
+			WithCompress(true).
+			Build()
+		errorFormatter := slog.NewTextFormatter()
+		errorFormatter.TimeFormat = LogTimeFormat
+		errLogHandler.SetFormatter(errorFormatter) // log complete data
+		slog.PushHandler(errLogHandler)
+		slog.Info("Enabled error log.")
+	}
 
-	slog.PushHandler(h1)
-	slog.PushHandler(h2)
-
-	slog.Info("Logging level set to", logLevel)
+	slog.Info("Log level set:", logLevel)
 }
 
 func migrateDatabase(config *config.DatabaseConfig) error {

@@ -37,7 +37,9 @@ func TestConfig_GetConfig(t *testing.T) {
 			ApiEnabled:  true,
 		},
 		Log: LogConfig{
-			Level: "Info",
+			Level:     "Info",
+			FileApp:   false,
+			FileError: false,
 		},
 	}
 
