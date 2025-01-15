@@ -69,11 +69,11 @@ func (s *Server) Health(ctx context.Context, _ *emptypb.Empty) (*proto.HealthRes
 func (s *Server) GetAssetChangeEventsForTick(ctx context.Context, request *proto.TickRequest) (*proto.AssetChangeEventsResponse, error) {
 	tickNumber := request.GetTick()
 	latestTick, err := s.repository.GetLatestTick(ctx)
-	if latestTick < int(tickNumber) {
-		return nil, tickNotFound(tickNumber, latestTick)
-	}
 	if err != nil {
 		return nil, retrieveEventsError("getting latest tick.", "error", err)
+	}
+	if latestTick < int(tickNumber) {
+		return nil, tickNotFound(tickNumber, latestTick)
 	}
 	slog.Debug("Get asset transfers:", "tick", tickNumber, "latest", latestTick)
 	events, err := s.repository.GetAssetChangeEventsForTick(ctx, int(tickNumber))
@@ -87,11 +87,11 @@ func (s *Server) GetAssetChangeEventsForTick(ctx context.Context, request *proto
 func (s *Server) GetQuTransferEventsForTick(ctx context.Context, request *proto.TickRequest) (*proto.QuTransferEventsResponse, error) {
 	tickNumber := request.GetTick()
 	latestTick, err := s.repository.GetLatestTick(ctx)
-	if latestTick < int(tickNumber) {
-		return nil, tickNotFound(tickNumber, latestTick)
-	}
 	if err != nil {
 		return nil, retrieveEventsError("getting latest tick.", "error", err)
+	}
+	if latestTick < int(tickNumber) {
+		return nil, tickNotFound(tickNumber, latestTick)
 	}
 	slog.Debug("Get qu transfers:", "tick", tickNumber, "latest", latestTick)
 	events, err := s.repository.GetQuTransferEventsForTick(ctx, int(tickNumber))
