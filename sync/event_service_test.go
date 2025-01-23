@@ -48,7 +48,7 @@ func (f FakeRepository) UpdateLatestTick(_ context.Context, tickNumber int) erro
 	return nil
 }
 
-func (f FakeRepository) GetOrCreateAssetIssuanceEvent(_ context.Context, _ int, _ int, _ int64, _ []byte, _ uint32) (int, error) {
+func (f FakeRepository) GetOrCreateAssetIssuanceEvent(_ context.Context, _ int, _ int, _ int64, _ string, _ uint32) (int, error) {
 	return rand.IntN(1000), nil
 }
 

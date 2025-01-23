@@ -113,7 +113,7 @@ func TestPgRepository_GetOrCreateAssetIssuanceEvent_GivenNone_ThenCreate(t *test
 	assetId, err := repository.GetOrCreateAsset(context.Background(), "TEST_ISSUER_ID", "A-NAME")
 	assert.Nil(t, err)
 
-	issuanceEventId, err := repository.GetOrCreateAssetIssuanceEvent(context.Background(), eventId, assetId, 1234567890, []byte{0, 0, 0, 0, 0, 0, 0}, 0)
+	issuanceEventId, err := repository.GetOrCreateAssetIssuanceEvent(context.Background(), eventId, assetId, 1234567890, "AAAAAAAAAA==", 0)
 	assert.Nil(t, err)
 	assert.Greater(t, issuanceEventId, 0)
 
@@ -129,10 +129,10 @@ func TestPgRepository_GetOrCreateAssetIssuanceEvent_GivenEvent_ThenGet(t *testin
 	assert.Nil(t, err)
 	assetId, err := repository.GetOrCreateAsset(context.Background(), "TEST_ISSUER_ID", "A-NAME")
 	assert.Nil(t, err)
-	issuanceEventId, err := repository.insertAssetIssuanceEvent(context.Background(), eventId, assetId, 1234567890, []byte{0, 0, 1, 0, 0, 0, 0}, 2)
+	issuanceEventId, err := repository.insertAssetIssuanceEvent(context.Background(), eventId, assetId, 1234567890, "AAAAAAAAAA==", 2)
 	assert.Nil(t, err)
 
-	reloaded, err := repository.GetOrCreateAssetIssuanceEvent(context.Background(), eventId, assetId, 0, nil, 0)
+	reloaded, err := repository.GetOrCreateAssetIssuanceEvent(context.Background(), eventId, assetId, 0, "", 0)
 	assert.Nil(t, err)
 	assert.Equal(t, issuanceEventId, reloaded)
 

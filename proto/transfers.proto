@@ -25,13 +25,24 @@ message EntityRequest {
 }
 
 message AssetChangeEventsResponse {
-  uint32 latestTick = 2;
-  repeated AssetChangeEvent events = 3;
+  uint32 latestTick = 1;
+  repeated AssetChangeEvent events = 2;
+}
+
+message AssetIssuanceEventResponse {
+  uint32 latestTick = 1;
+  repeated AssetIssuanceEvent events = 2;
+}
+
+message AssetEventsResponse {
+  uint32 latestTick = 1;
+  repeated AssetChangeEvent changeEvents = 2;
+  repeated AssetIssuanceEvent issuanceEvents = 3;
 }
 
 message QuTransferEventsResponse {
-  uint32 latestTick = 2;
-  repeated QuTransferEvent events = 3;
+  uint32 latestTick = 1;
+  repeated QuTransferEvent events = 2;
 }
 
 message QuTransferEvent {
@@ -54,6 +65,17 @@ message AssetChangeEvent {
   uint32 eventType = 8;
 }
 
+message AssetIssuanceEvent {
+  string issuerId = 1;
+  string name = 2;
+  uint64 numberOfShares = 3;
+  string unitOfMeasurement = 4;
+  uint32 numberOfDecimalPlaces = 5;
+  string transactionHash = 6;
+  uint32 tick = 7;
+  uint32 eventType = 8;
+}
+
 service TransferService {
 
   rpc Health(google.protobuf.Empty) returns (HealthResponse) {
@@ -62,27 +84,39 @@ service TransferService {
     };
   }
 
-  rpc GetAssetChangeEventsForTick(TickRequest) returns (AssetChangeEventsResponse) {
+  rpc GetAssetEventsForTick(TickRequest) returns (AssetEventsResponse) {
     option (google.api.http) = {
-      get: "/api/v1/ticks/{tick}/events/asset-transfer"
+      get: "/api/v1/ticks/{tick}/events/assets"
     };
   }
 
-  rpc GetQuTransferEventsForTick(TickRequest) returns (QuTransferEventsResponse) {
+  rpc GetAssetChangeEventsForTick(TickRequest) returns (AssetChangeEventsResponse) {
     option (google.api.http) = {
-      get: "/api/v1/ticks/{tick}/events/qu-transfer"
+      get: "/api/v1/ticks/{tick}/events/asset-transfers"
+    };
+  }
+
+  rpc GetAssetIssuanceEventsForTick(TickRequest) returns (AssetIssuanceEventResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/ticks/{tick}/events/asset-issuances"
     };
   }
 
   rpc GetAssetChangeEventsForEntity(EntityRequest) returns (AssetChangeEventsResponse) {
     option (google.api.http) = {
-      get: "/api/v1/entities/{identity}/events/asset-transfer"
+      get: "/api/v1/entities/{identity}/events/asset-transfers"
+    };
+  }
+
+  rpc GetQuTransferEventsForTick(TickRequest) returns (QuTransferEventsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/ticks/{tick}/events/qu-transfers"
     };
   }
 
   rpc GetQuTransferEventsForEntity(EntityRequest) returns (QuTransferEventsResponse) {
     option (google.api.http) = {
-      get: "/api/v1/entities/{identity}/events/qu-transfer"
+      get: "/api/v1/entities/{identity}/events/qu-transfers"
     };
   }
 
