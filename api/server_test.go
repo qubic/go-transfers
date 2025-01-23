@@ -16,6 +16,10 @@ import (
 type FakeRepository struct {
 }
 
+func (f FakeRepository) GetAssetIssuanceEventsForTick(_ context.Context, _ int) ([]*proto.AssetIssuanceEvent, error) {
+	return []*proto.AssetIssuanceEvent{}, nil
+}
+
 func (f FakeRepository) GetAssetChangeEventsForEntity(_ context.Context, _ string) ([]*proto.AssetChangeEvent, error) {
 	return []*proto.AssetChangeEvent{}, nil
 }
@@ -74,36 +78,44 @@ func TestServer_whenHealth_thenReturnStatusUp(t *testing.T) {
 	require.JSONEq(t, `{ "status":"UP", "components": { "db": { "status":"UP", "details": { "latestTick": "1234" } } } }`, string(body))
 }
 
+func TestServer_GetAssetEventsForTick_thenReturnAssetEvents(t *testing.T) {
+	callServiceVerifyNoError(t, "http://localhost:8003/api/v1/ticks/1234/events/assets")
+}
+
+func TestServer_GetAssetIssuanceEventsForTick_thenReturnAssetIssuances(t *testing.T) {
+	callServiceVerifyNoError(t, "http://localhost:8003/api/v1/ticks/1234/events/asset-issuances")
+}
+
 func TestServer_GetAssetTransfersForTick_thenReturnAssetTransfers(t *testing.T) {
-	callServiceVerifyNoError(t, "http://localhost:8003/api/v1/ticks/1234/events/asset-transfer")
+	callServiceVerifyNoError(t, "http://localhost:8003/api/v1/ticks/1234/events/asset-transfers")
 }
 
 func TestServer_GetAssetTransfersForTick_givenUnavailableTickNumber_thenReturnNotFound(t *testing.T) {
-	callServiceVerifyStatus(t, "http://localhost:8003/api/v1/ticks/12345/events/asset-transfer", http.StatusNotFound)
+	callServiceVerifyStatus(t, "http://localhost:8003/api/v1/ticks/12345/events/asset-transfers", http.StatusNotFound)
 }
 
 func TestServer_GetQuTransfersForTick_thenStatusOk(t *testing.T) {
-	callServiceVerifyNoError(t, "http://localhost:8003/api/v1/ticks/1234/events/qu-transfer")
+	callServiceVerifyNoError(t, "http://localhost:8003/api/v1/ticks/1234/events/qu-transfers")
 }
 
 func TestServer_GetQuTransfersForTick_givenUnavailableTickNumber_thenReturnNotFound(t *testing.T) {
-	callServiceVerifyStatus(t, "http://localhost:8003/api/v1/ticks/12345/events/qu-transfer", http.StatusNotFound)
+	callServiceVerifyStatus(t, "http://localhost:8003/api/v1/ticks/12345/events/qu-transfers", http.StatusNotFound)
 }
 
 func TestServer_GetAssetTransfersForEntity_thenReturnAssetTransfers(t *testing.T) {
-	callServiceVerifyNoError(t, "http://localhost:8003/api/v1/entities/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFXIB/events/asset-transfer")
+	callServiceVerifyNoError(t, "http://localhost:8003/api/v1/entities/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFXIB/events/asset-transfers")
 }
 
 func TestServer_GetAssetTransfersForEntity_GivenInvalidIdentity_thenReturnBadRequest(t *testing.T) {
-	callServiceVerifyStatus(t, "http://localhost:8003/api/v1/entities/BLAH/events/asset-transfer", http.StatusBadRequest)
+	callServiceVerifyStatus(t, "http://localhost:8003/api/v1/entities/BLAH/events/asset-transfers", http.StatusBadRequest)
 }
 
 func TestServer_GetQuTransfersForEntity_thenStatusOk(t *testing.T) {
-	callServiceVerifyNoError(t, "http://localhost:8003/api/v1/entities/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFXIB/events/qu-transfer")
+	callServiceVerifyNoError(t, "http://localhost:8003/api/v1/entities/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFXIB/events/qu-transfers")
 }
 
 func TestServer_GetQuTransfersForEntity_givenInvalidIdentity_thenBadRequest(t *testing.T) {
-	callServiceVerifyStatus(t, "http://localhost:8003/api/v1/entities/BLAH/events/qu-transfer", http.StatusBadRequest)
+	callServiceVerifyStatus(t, "http://localhost:8003/api/v1/entities/BLAH/events/qu-transfers", http.StatusBadRequest)
 }
 
 //goland:noinspection SpellCheckingInspection

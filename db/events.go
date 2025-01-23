@@ -69,7 +69,7 @@ func (r *PgRepository) getAssetChangeEventId(ctx context.Context, eventId int) (
 
 // asset issuance events
 
-func (r *PgRepository) GetOrCreateAssetIssuanceEvent(ctx context.Context, eventId int, assetId int, numberOfShares int64, unitOfMeasurement []byte, numberOfDecimalPlaces uint32) (int, error) {
+func (r *PgRepository) GetOrCreateAssetIssuanceEvent(ctx context.Context, eventId int, assetId int, numberOfShares int64, unitOfMeasurement string, numberOfDecimalPlaces uint32) (int, error) {
 	id, err := r.getAssetIssuanceEventId(ctx, eventId)
 	if errors.Is(err, sql.ErrNoRows) {
 		id, err = r.insertAssetIssuanceEvent(ctx, eventId, assetId, numberOfShares, unitOfMeasurement, numberOfDecimalPlaces)
@@ -77,7 +77,7 @@ func (r *PgRepository) GetOrCreateAssetIssuanceEvent(ctx context.Context, eventI
 	return id, errors.Wrap(err, "getting or creating asset issuance event")
 }
 
-func (r *PgRepository) insertAssetIssuanceEvent(ctx context.Context, eventId int, assetId int, numberOfShares int64, unitOfMeasurement []byte, numberOfDecimalPlaces uint32) (int, error) {
+func (r *PgRepository) insertAssetIssuanceEvent(ctx context.Context, eventId int, assetId int, numberOfShares int64, unitOfMeasurement string, numberOfDecimalPlaces uint32) (int, error) {
 	insertSql := `insert into asset_issuance_events (event_id, asset_id, number_of_shares, unit_of_measurement, number_of_decimal_places) VALUES ($1, $2, $3, $4, $5) returning id;`
 	return insert(ctx, r.db, insertSql, eventId, assetId, numberOfShares, unitOfMeasurement, numberOfDecimalPlaces)
 }

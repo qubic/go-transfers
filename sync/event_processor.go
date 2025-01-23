@@ -20,7 +20,7 @@ type EventRepository interface {
 	GetOrCreateEvent(ctx context.Context, transactionId int, eventEventId uint64, eventType uint32, eventData string) (int, error)
 	GetOrCreateQuTransferEvent(ctx context.Context, eventId int, sourceEntityId int, destinationEntityId int, amount uint64) (int, error)
 	GetOrCreateAssetChangeEvent(ctx context.Context, eventId, assetId, sourceEntityId, destinationEntityId int, numberOfShares int64) (int, error)
-	GetOrCreateAssetIssuanceEvent(ctx context.Context, eventId int, assetId int, numberOfShares int64, unitOfMeasurement []byte, numberOfDecimalPlaces uint32) (int, error)
+	GetOrCreateAssetIssuanceEvent(ctx context.Context, eventId int, assetId int, numberOfShares int64, unitOfMeasurement string, numberOfDecimalPlaces uint32) (int, error)
 }
 
 type EventProcessor struct {
@@ -139,9 +139,10 @@ func (ep *EventProcessor) storeAssetIssuanceEvent(ctx context.Context, eventData
 	if err != nil {
 		return -1, errors.Wrap(err, "storing asset issuance")
 	}
+	unitOfMeasurement := base64.StdEncoding.EncodeToString(assetIssuanceEvent.GetMeasurementUnit())
 	assetIssuanceEventId, err := ep.repository.GetOrCreateAssetIssuanceEvent(ctx, eventId, assetId,
 		assetIssuanceEvent.GetNumberOfShares(),
-		assetIssuanceEvent.GetMeasurementUnit(),
+		unitOfMeasurement,
 		assetIssuanceEvent.GetNumberOfDecimals())
 	if err != nil {
 		return -1, errors.Wrap(err, "storing asset issuance")

@@ -30,6 +30,7 @@ type Server struct {
 type Repository interface {
 	GetLatestTick(ctx context.Context) (int, error)
 	GetAssetChangeEventsForTick(ctx context.Context, tickNumber int) ([]*proto.AssetChangeEvent, error)
+	GetAssetIssuanceEventsForTick(ctx context.Context, tickNumber int) ([]*proto.AssetIssuanceEvent, error)
 	GetQuTransferEventsForTick(ctx context.Context, tickNumber int) ([]*proto.QuTransferEvent, error)
 	GetQuTransferEventsForEntity(ctx context.Context, identity string) ([]*proto.QuTransferEvent, error)
 	GetAssetChangeEventsForEntity(ctx context.Context, identity string) ([]*proto.AssetChangeEvent, error)
@@ -66,6 +67,32 @@ func (s *Server) Health(ctx context.Context, _ *emptypb.Empty) (*proto.HealthRes
 	}, nil
 }
 
+func (s *Server) GetAssetEventsForTick(ctx context.Context, request *proto.TickRequest) (*proto.AssetEventsResponse, error) {
+	tickNumber := request.GetTick()
+	latestTick, err := s.repository.GetLatestTick(ctx)
+	if err != nil {
+		return nil, retrieveEventsError("getting latest tick.", "error", err)
+	}
+	if latestTick < int(tickNumber) {
+		return nil, tickNotFound(tickNumber, latestTick)
+	}
+	slog.Debug("Get asset events:", "tick", tickNumber, "latest", latestTick)
+	assetChangeEvents, err := s.repository.GetAssetChangeEventsForTick(ctx, int(tickNumber))
+	if err != nil {
+		return nil, retrieveEventsError("getting asset change events.", "tickNumber", tickNumber, "error", err)
+	}
+	issuanceEvents, err := s.repository.GetAssetIssuanceEventsForTick(ctx, int(tickNumber))
+	if err != nil {
+		return nil, retrieveEventsError("getting asset issuance events.", "tickNumber", tickNumber, "error", err)
+	}
+	response := proto.AssetEventsResponse{
+		LatestTick:     uint32(latestTick),
+		ChangeEvents:   assetChangeEvents,
+		IssuanceEvents: issuanceEvents,
+	}
+	return &response, nil
+}
+
 func (s *Server) GetAssetChangeEventsForTick(ctx context.Context, request *proto.TickRequest) (*proto.AssetChangeEventsResponse, error) {
 	tickNumber := request.GetTick()
 	latestTick, err := s.repository.GetLatestTick(ctx)
@@ -78,9 +105,27 @@ func (s *Server) GetAssetChangeEventsForTick(ctx context.Context, request *proto
 	slog.Debug("Get asset transfers:", "tick", tickNumber, "latest", latestTick)
 	events, err := s.repository.GetAssetChangeEventsForTick(ctx, int(tickNumber))
 	if err != nil {
-		return nil, retrieveEventsError("getting ownership change events.", "tickNumber", tickNumber, "error", err)
+		return nil, retrieveEventsError("getting asset change events.", "tickNumber", tickNumber, "error", err)
 	}
 	response := proto.AssetChangeEventsResponse{LatestTick: uint32(latestTick), Events: events}
+	return &response, nil
+}
+
+func (s *Server) GetAssetIssuanceEventsForTick(ctx context.Context, request *proto.TickRequest) (*proto.AssetIssuanceEventResponse, error) {
+	tickNumber := request.GetTick()
+	latestTick, err := s.repository.GetLatestTick(ctx)
+	if err != nil {
+		return nil, retrieveEventsError("getting latest tick.", "error", err)
+	}
+	if latestTick < int(tickNumber) {
+		return nil, tickNotFound(tickNumber, latestTick)
+	}
+	slog.Debug("Get asset issuances:", "tick", tickNumber, "latest", latestTick)
+	events, err := s.repository.GetAssetIssuanceEventsForTick(ctx, int(tickNumber))
+	if err != nil {
+		return nil, retrieveEventsError("getting asset issuance events.", "tickNumber", tickNumber, "error", err)
+	}
+	response := proto.AssetIssuanceEventResponse{LatestTick: uint32(latestTick), Events: events}
 	return &response, nil
 }
 

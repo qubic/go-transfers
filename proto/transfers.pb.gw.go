@@ -50,6 +50,58 @@ func local_request_TransferService_Health_0(ctx context.Context, marshaler runti
 
 }
 
+func request_TransferService_GetAssetEventsForTick_0(ctx context.Context, marshaler runtime.Marshaler, client TransferServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq TickRequest
+	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["tick"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "tick")
+	}
+
+	protoReq.Tick, err = runtime.Uint32(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "tick", err)
+	}
+
+	msg, err := client.GetAssetEventsForTick(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_TransferService_GetAssetEventsForTick_0(ctx context.Context, marshaler runtime.Marshaler, server TransferServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq TickRequest
+	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["tick"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "tick")
+	}
+
+	protoReq.Tick, err = runtime.Uint32(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "tick", err)
+	}
+
+	msg, err := server.GetAssetEventsForTick(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
 func request_TransferService_GetAssetChangeEventsForTick_0(ctx context.Context, marshaler runtime.Marshaler, client TransferServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq TickRequest
 	var metadata runtime.ServerMetadata
@@ -102,7 +154,7 @@ func local_request_TransferService_GetAssetChangeEventsForTick_0(ctx context.Con
 
 }
 
-func request_TransferService_GetQuTransferEventsForTick_0(ctx context.Context, marshaler runtime.Marshaler, client TransferServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_TransferService_GetAssetIssuanceEventsForTick_0(ctx context.Context, marshaler runtime.Marshaler, client TransferServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq TickRequest
 	var metadata runtime.ServerMetadata
 
@@ -123,12 +175,12 @@ func request_TransferService_GetQuTransferEventsForTick_0(ctx context.Context, m
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "tick", err)
 	}
 
-	msg, err := client.GetQuTransferEventsForTick(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.GetAssetIssuanceEventsForTick(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_TransferService_GetQuTransferEventsForTick_0(ctx context.Context, marshaler runtime.Marshaler, server TransferServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_TransferService_GetAssetIssuanceEventsForTick_0(ctx context.Context, marshaler runtime.Marshaler, server TransferServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq TickRequest
 	var metadata runtime.ServerMetadata
 
@@ -149,7 +201,7 @@ func local_request_TransferService_GetQuTransferEventsForTick_0(ctx context.Cont
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "tick", err)
 	}
 
-	msg, err := server.GetQuTransferEventsForTick(ctx, &protoReq)
+	msg, err := server.GetAssetIssuanceEventsForTick(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -202,6 +254,58 @@ func local_request_TransferService_GetAssetChangeEventsForEntity_0(ctx context.C
 	}
 
 	msg, err := server.GetAssetChangeEventsForEntity(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+func request_TransferService_GetQuTransferEventsForTick_0(ctx context.Context, marshaler runtime.Marshaler, client TransferServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq TickRequest
+	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["tick"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "tick")
+	}
+
+	protoReq.Tick, err = runtime.Uint32(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "tick", err)
+	}
+
+	msg, err := client.GetQuTransferEventsForTick(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_TransferService_GetQuTransferEventsForTick_0(ctx context.Context, marshaler runtime.Marshaler, server TransferServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq TickRequest
+	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["tick"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "tick")
+	}
+
+	protoReq.Tick, err = runtime.Uint32(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "tick", err)
+	}
+
+	msg, err := server.GetQuTransferEventsForTick(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -289,6 +393,31 @@ func RegisterTransferServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 
 	})
 
+	mux.Handle("GET", pattern_TransferService_GetAssetEventsForTick_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/qubic.transfers.proto.TransferService/GetAssetEventsForTick", runtime.WithHTTPPathPattern("/api/v1/ticks/{tick}/events/assets"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_TransferService_GetAssetEventsForTick_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_TransferService_GetAssetEventsForTick_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("GET", pattern_TransferService_GetAssetChangeEventsForTick_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -297,7 +426,7 @@ func RegisterTransferServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/qubic.transfers.proto.TransferService/GetAssetChangeEventsForTick", runtime.WithHTTPPathPattern("/api/v1/ticks/{tick}/events/asset-transfer"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/qubic.transfers.proto.TransferService/GetAssetChangeEventsForTick", runtime.WithHTTPPathPattern("/api/v1/ticks/{tick}/events/asset-transfers"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -314,7 +443,7 @@ func RegisterTransferServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 
 	})
 
-	mux.Handle("GET", pattern_TransferService_GetQuTransferEventsForTick_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_TransferService_GetAssetIssuanceEventsForTick_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -322,12 +451,12 @@ func RegisterTransferServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/qubic.transfers.proto.TransferService/GetQuTransferEventsForTick", runtime.WithHTTPPathPattern("/api/v1/ticks/{tick}/events/qu-transfer"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/qubic.transfers.proto.TransferService/GetAssetIssuanceEventsForTick", runtime.WithHTTPPathPattern("/api/v1/ticks/{tick}/events/asset-issuances"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_TransferService_GetQuTransferEventsForTick_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_TransferService_GetAssetIssuanceEventsForTick_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -335,7 +464,7 @@ func RegisterTransferServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 			return
 		}
 
-		forward_TransferService_GetQuTransferEventsForTick_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_TransferService_GetAssetIssuanceEventsForTick_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -347,7 +476,7 @@ func RegisterTransferServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/qubic.transfers.proto.TransferService/GetAssetChangeEventsForEntity", runtime.WithHTTPPathPattern("/api/v1/entities/{identity}/events/asset-transfer"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/qubic.transfers.proto.TransferService/GetAssetChangeEventsForEntity", runtime.WithHTTPPathPattern("/api/v1/entities/{identity}/events/asset-transfers"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -364,6 +493,31 @@ func RegisterTransferServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 
 	})
 
+	mux.Handle("GET", pattern_TransferService_GetQuTransferEventsForTick_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/qubic.transfers.proto.TransferService/GetQuTransferEventsForTick", runtime.WithHTTPPathPattern("/api/v1/ticks/{tick}/events/qu-transfers"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_TransferService_GetQuTransferEventsForTick_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_TransferService_GetQuTransferEventsForTick_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("GET", pattern_TransferService_GetQuTransferEventsForEntity_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -372,7 +526,7 @@ func RegisterTransferServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/qubic.transfers.proto.TransferService/GetQuTransferEventsForEntity", runtime.WithHTTPPathPattern("/api/v1/entities/{identity}/events/qu-transfer"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/qubic.transfers.proto.TransferService/GetQuTransferEventsForEntity", runtime.WithHTTPPathPattern("/api/v1/entities/{identity}/events/qu-transfers"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -452,13 +606,35 @@ func RegisterTransferServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 
 	})
 
+	mux.Handle("GET", pattern_TransferService_GetAssetEventsForTick_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/qubic.transfers.proto.TransferService/GetAssetEventsForTick", runtime.WithHTTPPathPattern("/api/v1/ticks/{tick}/events/assets"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_TransferService_GetAssetEventsForTick_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_TransferService_GetAssetEventsForTick_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("GET", pattern_TransferService_GetAssetChangeEventsForTick_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/qubic.transfers.proto.TransferService/GetAssetChangeEventsForTick", runtime.WithHTTPPathPattern("/api/v1/ticks/{tick}/events/asset-transfer"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/qubic.transfers.proto.TransferService/GetAssetChangeEventsForTick", runtime.WithHTTPPathPattern("/api/v1/ticks/{tick}/events/asset-transfers"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -474,25 +650,25 @@ func RegisterTransferServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 
 	})
 
-	mux.Handle("GET", pattern_TransferService_GetQuTransferEventsForTick_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_TransferService_GetAssetIssuanceEventsForTick_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/qubic.transfers.proto.TransferService/GetQuTransferEventsForTick", runtime.WithHTTPPathPattern("/api/v1/ticks/{tick}/events/qu-transfer"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/qubic.transfers.proto.TransferService/GetAssetIssuanceEventsForTick", runtime.WithHTTPPathPattern("/api/v1/ticks/{tick}/events/asset-issuances"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_TransferService_GetQuTransferEventsForTick_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_TransferService_GetAssetIssuanceEventsForTick_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_TransferService_GetQuTransferEventsForTick_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_TransferService_GetAssetIssuanceEventsForTick_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -502,7 +678,7 @@ func RegisterTransferServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/qubic.transfers.proto.TransferService/GetAssetChangeEventsForEntity", runtime.WithHTTPPathPattern("/api/v1/entities/{identity}/events/asset-transfer"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/qubic.transfers.proto.TransferService/GetAssetChangeEventsForEntity", runtime.WithHTTPPathPattern("/api/v1/entities/{identity}/events/asset-transfers"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -518,13 +694,35 @@ func RegisterTransferServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 
 	})
 
+	mux.Handle("GET", pattern_TransferService_GetQuTransferEventsForTick_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/qubic.transfers.proto.TransferService/GetQuTransferEventsForTick", runtime.WithHTTPPathPattern("/api/v1/ticks/{tick}/events/qu-transfers"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_TransferService_GetQuTransferEventsForTick_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_TransferService_GetQuTransferEventsForTick_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("GET", pattern_TransferService_GetQuTransferEventsForEntity_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/qubic.transfers.proto.TransferService/GetQuTransferEventsForEntity", runtime.WithHTTPPathPattern("/api/v1/entities/{identity}/events/qu-transfer"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/qubic.transfers.proto.TransferService/GetQuTransferEventsForEntity", runtime.WithHTTPPathPattern("/api/v1/entities/{identity}/events/qu-transfers"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -546,23 +744,31 @@ func RegisterTransferServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 var (
 	pattern_TransferService_Health_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"status", "health"}, ""))
 
-	pattern_TransferService_GetAssetChangeEventsForTick_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4, 2, 5}, []string{"api", "v1", "ticks", "tick", "events", "asset-transfer"}, ""))
+	pattern_TransferService_GetAssetEventsForTick_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4, 2, 5}, []string{"api", "v1", "ticks", "tick", "events", "assets"}, ""))
 
-	pattern_TransferService_GetQuTransferEventsForTick_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4, 2, 5}, []string{"api", "v1", "ticks", "tick", "events", "qu-transfer"}, ""))
+	pattern_TransferService_GetAssetChangeEventsForTick_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4, 2, 5}, []string{"api", "v1", "ticks", "tick", "events", "asset-transfers"}, ""))
 
-	pattern_TransferService_GetAssetChangeEventsForEntity_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4, 2, 5}, []string{"api", "v1", "entities", "identity", "events", "asset-transfer"}, ""))
+	pattern_TransferService_GetAssetIssuanceEventsForTick_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4, 2, 5}, []string{"api", "v1", "ticks", "tick", "events", "asset-issuances"}, ""))
 
-	pattern_TransferService_GetQuTransferEventsForEntity_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4, 2, 5}, []string{"api", "v1", "entities", "identity", "events", "qu-transfer"}, ""))
+	pattern_TransferService_GetAssetChangeEventsForEntity_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4, 2, 5}, []string{"api", "v1", "entities", "identity", "events", "asset-transfers"}, ""))
+
+	pattern_TransferService_GetQuTransferEventsForTick_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4, 2, 5}, []string{"api", "v1", "ticks", "tick", "events", "qu-transfers"}, ""))
+
+	pattern_TransferService_GetQuTransferEventsForEntity_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4, 2, 5}, []string{"api", "v1", "entities", "identity", "events", "qu-transfers"}, ""))
 )
 
 var (
 	forward_TransferService_Health_0 = runtime.ForwardResponseMessage
 
+	forward_TransferService_GetAssetEventsForTick_0 = runtime.ForwardResponseMessage
+
 	forward_TransferService_GetAssetChangeEventsForTick_0 = runtime.ForwardResponseMessage
 
-	forward_TransferService_GetQuTransferEventsForTick_0 = runtime.ForwardResponseMessage
+	forward_TransferService_GetAssetIssuanceEventsForTick_0 = runtime.ForwardResponseMessage
 
 	forward_TransferService_GetAssetChangeEventsForEntity_0 = runtime.ForwardResponseMessage
+
+	forward_TransferService_GetQuTransferEventsForTick_0 = runtime.ForwardResponseMessage
 
 	forward_TransferService_GetQuTransferEventsForEntity_0 = runtime.ForwardResponseMessage
 )
