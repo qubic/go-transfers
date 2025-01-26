@@ -12,7 +12,7 @@ func (r *PgRepository) GetOrCreateTransaction(ctx context.Context, hash string, 
 	if errors.Is(err, sql.ErrNoRows) {
 		id, err = r.insertTransaction(ctx, hash, tickId)
 	}
-	return id, errors.Wrap(err, "getting or creating transaction")
+	return id, errors.Wrapf(err, "getting or creating transaction [%s]", hash)
 }
 
 func (r *PgRepository) getTransactionId(ctx context.Context, hash string, tickId int) (int, error) {

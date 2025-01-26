@@ -12,7 +12,7 @@ func (r *PgRepository) GetOrCreateTick(ctx context.Context, tickNumber uint32) (
 	if errors.Is(err, sql.ErrNoRows) {
 		id, err = r.insertTick(ctx, tickNumber)
 	}
-	return id, errors.Wrap(err, "getting or creating tick")
+	return id, errors.Wrapf(err, "getting or creating tick [%d]", tickNumber)
 }
 
 func (r *PgRepository) getTickId(ctx context.Context, tickNumber uint32) (int, error) {

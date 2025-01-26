@@ -14,7 +14,7 @@ func (r *PgRepository) GetOrCreateEvent(ctx context.Context, transactionId int, 
 	if errors.Is(err, sql.ErrNoRows) {
 		id, err = r.insertEvent(ctx, transactionId, eventEventId, eventType, eventData)
 	}
-	return id, errors.Wrap(err, "getting or creating event")
+	return id, errors.Wrapf(err, "getting or creating event for transaction id [%d] and events event id [%d]", transactionId, eventEventId)
 }
 
 func (r *PgRepository) insertEvent(ctx context.Context, transactionId int, eventEventId uint64, eventType uint32, eventData string) (int, error) {
@@ -34,7 +34,7 @@ func (r *PgRepository) GetOrCreateQuTransferEvent(ctx context.Context, eventId i
 	if errors.Is(err, sql.ErrNoRows) {
 		id, err = r.insertQuTransferEvent(ctx, eventId, sourceEntityId, destinationEntityId, amount)
 	}
-	return id, errors.Wrap(err, "getting or creating qu transfer event")
+	return id, errors.Wrapf(err, "getting or creating qu transfer for event [%d]", eventId)
 }
 
 func (r *PgRepository) insertQuTransferEvent(ctx context.Context, eventId int, sourceEntityId int, destinationEntityId int, amount uint64) (int, error) {
@@ -54,7 +54,7 @@ func (r *PgRepository) GetOrCreateAssetChangeEvent(ctx context.Context, eventId,
 	if errors.Is(err, sql.ErrNoRows) {
 		id, err = r.insertAssetChangeEvent(ctx, eventId, assetId, sourceEntityId, destinationEntityId, numberOfShares)
 	}
-	return id, errors.Wrap(err, "getting or creating asset change event")
+	return id, errors.Wrapf(err, "getting or creating asset change for event [%d]", eventId)
 }
 
 func (r *PgRepository) insertAssetChangeEvent(ctx context.Context, eventId, assetId, sourceEntityId, destinationEntityId int, numberOfShares int64) (int, error) {
@@ -74,7 +74,7 @@ func (r *PgRepository) GetOrCreateAssetIssuanceEvent(ctx context.Context, eventI
 	if errors.Is(err, sql.ErrNoRows) {
 		id, err = r.insertAssetIssuanceEvent(ctx, eventId, assetId, numberOfShares, unitOfMeasurement, numberOfDecimalPlaces)
 	}
-	return id, errors.Wrap(err, "getting or creating asset issuance event")
+	return id, errors.Wrapf(err, "getting or creating asset issuance for event [%d]", eventId)
 }
 
 func (r *PgRepository) insertAssetIssuanceEvent(ctx context.Context, eventId int, assetId int, numberOfShares int64, unitOfMeasurement string, numberOfDecimalPlaces uint32) (int, error) {

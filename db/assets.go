@@ -12,7 +12,7 @@ func (r *PgRepository) GetOrCreateAsset(ctx context.Context, issuer, name string
 	if errors.Is(err, sql.ErrNoRows) { // not found create
 		return r.createAsset(ctx, issuer, name)
 	}
-	return id, errors.Wrap(err, "getting or creating asset")
+	return id, errors.Wrapf(err, "getting or creating asset [%s]/[%s]", issuer, name)
 }
 
 func (r *PgRepository) createAsset(ctx context.Context, issuer, name string) (int, error) {
