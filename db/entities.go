@@ -12,7 +12,7 @@ func (r *PgRepository) GetOrCreateEntity(ctx context.Context, identity string) (
 	if errors.Is(err, sql.ErrNoRows) { // insert if not found
 		id, err = r.insertEntity(ctx, identity)
 	}
-	return id, errors.Wrap(err, "getting or creating entity")
+	return id, errors.Wrapf(err, "getting or creating entity [%s]", identity)
 }
 
 func (r *PgRepository) insertEntity(ctx context.Context, identity string) (int, error) {

@@ -29,7 +29,7 @@ var (
 )
 
 func TestEventService_GetEventRange(t *testing.T) {
-	err := eventService.processTickEventsRange(context.Background(), 17603769, 17603770)
+	err := eventService.processTickEventsRange(context.Background(), 18636172, 18636179)
 	assert.NoError(t, err)
 }
 

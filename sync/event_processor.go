@@ -75,7 +75,7 @@ func (ep *EventProcessor) ProcessTickEvents(ctx context.Context, tickEvents *eve
 					err = errors.New("unexpected unhandled event type.")
 				}
 				if err != nil {
-					slog.Error("Could not process event.", "eventType", event.EventType, "eventData", eventData, "error", err)
+					slog.Error("Could not process event.", "tick", tickEvents.GetTick(), "transactionId", transactionId, "eventId", eventId, "error", err)
 					return -1, errors.Wrap(err, "storing event details")
 				} else {
 					slog.Info("Stored event:", "id", dbId, "type", eventType, "transaction", transactionEvents.GetTxId())
