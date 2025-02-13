@@ -21,17 +21,25 @@ type TickNumberRepository interface {
 	UpdateLatestTick(ctx context.Context, tickNumber int) error
 }
 
+type Metrics interface {
+	SetLatestProcessedTick(tick uint32)
+	SetLatestAvailableEventTick(tick uint32)
+	SetLatestAvailableLiveTick(tick uint32)
+}
+
 type EventService struct {
 	client         EventClient
 	eventProcessor *EventProcessor
 	repository     TickNumberRepository
+	metrics        Metrics
 }
 
-func NewEventService(client EventClient, eventProcessor *EventProcessor, repository TickNumberRepository) (*EventService, error) {
+func NewEventService(client EventClient, eventProcessor *EventProcessor, repository TickNumberRepository, metrics Metrics) (*EventService, error) {
 	es := EventService{
 		client:         client,
 		eventProcessor: eventProcessor,
 		repository:     repository,
+		metrics:        metrics,
 	}
 	return &es, nil
 }
@@ -59,11 +67,13 @@ func (es *EventService) sync(count uint64) error {
 	if err != nil {
 		return errors.Wrap(err, "calculating start tick")
 	}
+	es.metrics.SetLatestAvailableLiveTick(uint32(currentTick))
 
 	status, err := es.client.GetStatus(ctx)
 	if err != nil {
 		return errors.Wrap(err, "getting event status.")
 	}
+	es.metrics.SetLatestAvailableEventTick(status.AvailableTick)
 	endTick := int(math.Min(float64(status.AvailableTick), float64(currentTick)))
 	endTick = int(math.Min(float64(endTick), float64(startTick+100))) // max batch process 100 ticks per run
 
@@ -132,6 +142,7 @@ func (es *EventService) processTickEvents(ctx context.Context, tick int) error {
 	if err != nil {
 		return errors.Wrapf(err, "updating latest tick to [%d]", tick)
 	}
+	es.metrics.SetLatestProcessedTick(uint32(tick))
 
 	var numberOfTransactionEvents, numberOfTotalEvents int
 	for _, txEv := range tickEvents.TxEvents {
