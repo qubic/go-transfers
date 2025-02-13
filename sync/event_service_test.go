@@ -81,6 +81,13 @@ func (f FakeRepository) GetOrCreateTick(_ context.Context, _ uint32) (int, error
 	return rand.IntN(1000), nil
 }
 
+type FakeMetrics struct {
+}
+
+func (fm *FakeMetrics) SetLatestProcessedTick(_ uint32)      {}
+func (fm *FakeMetrics) SetLatestAvailableEventTick(_ uint32) {}
+func (fm *FakeMetrics) SetLatestAvailableLiveTick(_ uint32)  {}
+
 //goland:noinspection SpellCheckingInspection
 func TestEventService_ProcessTickEvents(t *testing.T) {
 	slog.SetLogLevel(slog.DebugLevel)
@@ -114,7 +121,7 @@ func TestEventService_ProcessTickEvents(t *testing.T) {
 
 	processedTestTick = 122
 	availableTestTick = 125
-	eventService, err := NewEventService(fakeEventClient, &eventProcessor, fakeRepo)
+	eventService, err := NewEventService(fakeEventClient, &eventProcessor, fakeRepo, &FakeMetrics{})
 	if err != nil {
 		t.Error(err)
 	}
