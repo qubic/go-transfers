@@ -34,12 +34,12 @@ type EventService struct {
 	metrics        Metrics
 }
 
-func NewEventService(client EventClient, eventProcessor *EventProcessor, repository TickNumberRepository, metrics Metrics) (*EventService, error) {
+func NewEventService(c EventClient, ep *EventProcessor, r TickNumberRepository, m Metrics) (*EventService, error) {
 	es := EventService{
-		client:         client,
-		eventProcessor: eventProcessor,
-		repository:     repository,
-		metrics:        metrics,
+		client:         c,
+		eventProcessor: ep,
+		repository:     r,
+		metrics:        m,
 	}
 	return &es, nil
 }

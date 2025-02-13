@@ -21,7 +21,7 @@ func (s *MetricsServer) Start() {
 
 	go func() {
 		serverMux := http.NewServeMux()
-		serverMux.Handle("/metrics", promhttp.Handler()) // FIXME
+		serverMux.Handle("/metrics", promhttp.Handler())
 
 		var server = &http.Server{
 			Addr:              s.address,
