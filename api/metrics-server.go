@@ -2,20 +2,17 @@ package api
 
 import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go-transfers/metrics"
 	"net/http"
 	"time"
 )
 
 type MetricsServer struct {
-	address        string
-	metricsService *metrics.Metrics
+	address string
 }
 
-func NewMetricsServer(address string, metricsService *metrics.Metrics) *MetricsServer {
+func NewMetricsServer(address string) *MetricsServer {
 	server := &MetricsServer{
-		address:        address,
-		metricsService: metricsService,
+		address: address,
 	}
 	return server
 }

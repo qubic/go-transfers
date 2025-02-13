@@ -146,7 +146,7 @@ func run() error {
 			return errors.Wrap(err, "starting server")
 		}
 		slog.Info("Starting metrics api...")
-		metricsSrv := api.NewMetricsServer(configuration.Server.MetricsHost, meters)
+		metricsSrv := api.NewMetricsServer(configuration.Server.MetricsHost)
 		metricsSrv.Start()
 	}
 
