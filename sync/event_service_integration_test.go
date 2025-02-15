@@ -78,7 +78,8 @@ func setup() {
 
 	repository = db.NewRepository(setupDatabase(context.Background()))
 	eventProcessor := NewEventProcessor(repository)
-	eventService, err = NewEventService(eventClient, eventProcessor, repository)
+	meters := &FakeMetrics{}
+	eventService, err = NewEventService(eventClient, eventProcessor, repository, meters)
 	if err != nil {
 		slog.Error("error creating event service")
 		os.Exit(-1)

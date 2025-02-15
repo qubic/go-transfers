@@ -13,6 +13,7 @@ import (
 	"go-transfers/api"
 	"go-transfers/client"
 	"go-transfers/db"
+	"go-transfers/metrics"
 	"go-transfers/sync"
 	"log"
 	"os"
@@ -27,8 +28,9 @@ func main() {
 }
 
 type ServerConfig struct {
-	HttpHost string `conf:"default:0.0.0.0:8000"`
-	GrpcHost string `conf:"default:0.0.0.0:8001"`
+	HttpHost    string `conf:"default:0.0.0.0:8000"`
+	GrpcHost    string `conf:"default:0.0.0.0:8001"`
+	MetricsHost string `conf:"default:0.0.0.0:8002"`
 }
 
 type ClientConfig struct {
@@ -122,7 +124,8 @@ func run() error {
 	if err != nil {
 		return errors.Wrap(err, "creating event client")
 	}
-	eventService, err := sync.NewEventService(eventClient, eventProcessor, repository)
+	meters := metrics.NewMetrics()
+	eventService, err := sync.NewEventService(eventClient, eventProcessor, repository, meters)
 	if err != nil {
 		return errors.Wrap(err, "creating event service")
 	}
@@ -142,10 +145,15 @@ func run() error {
 		if err != nil {
 			return errors.Wrap(err, "starting server")
 		}
+		slog.Info("Starting metrics api...")
+		metricsSrv := api.NewMetricsServer(configuration.Server.MetricsHost)
+		metricsSrv.Start()
 	}
 
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+
+	slog.Info("Startup complete.")
 
 	for {
 		select {
@@ -167,6 +175,7 @@ func configureLogging(config LogConfig) {
 	slog.SetFormatter(formatter)
 	logLevel := slog.LevelByName(config.Level)
 	slog.SetLogLevel(logLevel)
+	slog.Info("Log level:", logLevel)
 
 	if config.FileApp {
 		// normal application log
@@ -200,8 +209,6 @@ func configureLogging(config LogConfig) {
 		slog.PushHandler(errLogHandler)
 		slog.Info("Enabled error log.")
 	}
-
-	slog.Info("Log level set:", logLevel)
 }
 
 func migrateDatabase(config *DatabaseConfig) error {
