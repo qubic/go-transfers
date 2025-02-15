@@ -11,9 +11,13 @@ import (
 )
 
 var (
-	processedTestTick      = 0
-	availableTestTick      = 0
-	storedQuTransferEvents = 0
+	processedTestTick             = 0
+	eventTick                     = 0
+	liveTick                      = 0
+	storedQuTransferEvents        = 0
+	metricProcessedTick    uint32 = 0
+	metricEventTick        uint32 = 0
+	metricLiveTick         uint32 = 0
 )
 
 type FakeEventClient struct {
@@ -25,7 +29,7 @@ func NewFakeEventClient(tickEvents map[uint32]*eventspb.TickEvents) (*FakeEventC
 }
 
 func (eventClient *FakeEventClient) GetStatus(_ context.Context) (*client.EventStatus, error) {
-	return &client.EventStatus{AvailableTick: uint32(availableTestTick)}, nil
+	return &client.EventStatus{AvailableTick: uint32(eventTick)}, nil
 }
 
 func (eventClient *FakeEventClient) GetEvents(_ context.Context, tickNumber uint32) (*eventspb.TickEvents, error) {
@@ -33,7 +37,7 @@ func (eventClient *FakeEventClient) GetEvents(_ context.Context, tickNumber uint
 }
 
 func (eventClient *FakeEventClient) GetTickInfo(_ context.Context) (*client.TickInfo, error) {
-	return &client.TickInfo{CurrentTick: uint32(availableTestTick)}, nil
+	return &client.TickInfo{CurrentTick: uint32(liveTick)}, nil
 }
 
 type FakeRepository struct {
@@ -84,9 +88,15 @@ func (f FakeRepository) GetOrCreateTick(_ context.Context, _ uint32) (int, error
 type FakeMetrics struct {
 }
 
-func (fm *FakeMetrics) SetLatestProcessedTick(_ uint32)      {}
-func (fm *FakeMetrics) SetLatestAvailableEventTick(_ uint32) {}
-func (fm *FakeMetrics) SetLatestAvailableLiveTick(_ uint32)  {}
+func (fm *FakeMetrics) SetLatestProcessedTick(tick uint32) {
+	metricProcessedTick = tick
+}
+func (fm *FakeMetrics) SetLatestAvailableEventTick(tick uint32) {
+	metricEventTick = tick
+}
+func (fm *FakeMetrics) SetLatestAvailableLiveTick(tick uint32) {
+	metricLiveTick = tick
+}
 
 //goland:noinspection SpellCheckingInspection
 func TestEventService_ProcessTickEvents(t *testing.T) {
@@ -109,9 +119,7 @@ func TestEventService_ProcessTickEvents(t *testing.T) {
 	}
 
 	fakeEventClient, err := NewFakeEventClient(eventMap)
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 
 	fakeRepo := &FakeRepository{}
 
@@ -120,19 +128,45 @@ func TestEventService_ProcessTickEvents(t *testing.T) {
 	}
 
 	processedTestTick = 122
-	availableTestTick = 125
+	eventTick = 125
+	liveTick = 126
 	eventService, err := NewEventService(fakeEventClient, &eventProcessor, fakeRepo, &FakeMetrics{})
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 
 	err = eventService.sync(42)
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 
 	assert.Equal(t, 4, storedQuTransferEvents)
 	assert.Equal(t, 125, processedTestTick)
+}
+
+func TestEventService_SetMetricCounters(t *testing.T) {
+
+	tickEvents1 := tickEvents(123)
+
+	eventMap := map[uint32]*eventspb.TickEvents{
+		123: &tickEvents1,
+	}
+
+	fakeEventClient, err := NewFakeEventClient(eventMap)
+	assert.NoError(t, err)
+
+	eventProcessor := EventProcessor{
+		repository: &FakeRepository{},
+	}
+
+	processedTestTick = 122
+	eventTick = 130
+	liveTick = 123
+	eventService, err := NewEventService(fakeEventClient, &eventProcessor, &FakeRepository{}, &FakeMetrics{})
+	assert.NoError(t, err)
+
+	err = eventService.sync(42)
+	assert.NoError(t, err)
+
+	assert.Equal(t, uint32(123), metricProcessedTick)
+	assert.Equal(t, uint32(123), metricLiveTick)
+	assert.Equal(t, uint32(130), metricEventTick)
 
 }
 
