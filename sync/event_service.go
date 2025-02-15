@@ -23,8 +23,8 @@ type TickNumberRepository interface {
 
 type Metrics interface {
 	SetLatestProcessedTick(tick uint32)
-	SetLatestAvailableEventTick(tick uint32)
-	SetLatestAvailableLiveTick(tick uint32)
+	SetLatestEventTick(tick uint32)
+	SetLatestLiveTick(tick uint32)
 }
 
 type EventService struct {
@@ -67,13 +67,13 @@ func (es *EventService) sync(count uint64) error {
 	if err != nil {
 		return errors.Wrap(err, "calculating start tick")
 	}
-	es.metrics.SetLatestAvailableLiveTick(uint32(currentTick))
+	es.metrics.SetLatestLiveTick(uint32(currentTick))
 
 	status, err := es.client.GetStatus(ctx)
 	if err != nil {
 		return errors.Wrap(err, "getting event status.")
 	}
-	es.metrics.SetLatestAvailableEventTick(status.AvailableTick)
+	es.metrics.SetLatestEventTick(status.AvailableTick)
 	endTick := int(math.Min(float64(status.AvailableTick), float64(currentTick)))
 	endTick = int(math.Min(float64(endTick), float64(startTick+100))) // max batch process 100 ticks per run
 

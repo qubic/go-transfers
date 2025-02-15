@@ -34,10 +34,10 @@ func (metrics *Metrics) SetLatestProcessedTick(tick uint32) {
 	metrics.processedTickGauge.Set(float64(tick))
 }
 
-func (metrics *Metrics) SetLatestAvailableEventTick(tick uint32) {
+func (metrics *Metrics) SetLatestEventTick(tick uint32) {
 	metrics.eventTickGauge.Set(float64(tick))
 }
 
-func (metrics *Metrics) SetLatestAvailableLiveTick(tick uint32) {
+func (metrics *Metrics) SetLatestLiveTick(tick uint32) {
 	metrics.liveTickGauge.Set(float64(tick))
 }

@@ -91,10 +91,10 @@ type FakeMetrics struct {
 func (fm *FakeMetrics) SetLatestProcessedTick(tick uint32) {
 	metricProcessedTick = tick
 }
-func (fm *FakeMetrics) SetLatestAvailableEventTick(tick uint32) {
+func (fm *FakeMetrics) SetLatestEventTick(tick uint32) {
 	metricEventTick = tick
 }
-func (fm *FakeMetrics) SetLatestAvailableLiveTick(tick uint32) {
+func (fm *FakeMetrics) SetLatestLiveTick(tick uint32) {
 	metricLiveTick = tick
 }
 
