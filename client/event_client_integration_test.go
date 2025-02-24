@@ -19,7 +19,7 @@ var (
 )
 
 func TestEventClient_GetEvents(t *testing.T) {
-	const tickNumber uint32 = 17302596
+	const tickNumber uint32 = 19236443 // needs current tick number
 	tickEvents, err := eventClient.GetEvents(context.Background(), tickNumber)
 	assert.Nil(t, err)
 	slog.Info("Received tick events.", "tick", tickNumber, "events", tickEvents)
