@@ -51,7 +51,7 @@ func (es *EventService) SyncInLoop() {
 	for range loopTick {
 		err := es.sync(count)
 		count++
-		if err != nil { // TODO we should crash here, not log
+		if err != nil {
 			slog.Error("processing tick events", "err", err.Error())
 		}
 		time.Sleep(time.Second)
@@ -71,7 +71,7 @@ func (es *EventService) sync(count uint64) error {
 
 	status, err := es.client.GetStatus(ctx)
 	if err != nil {
-		return errors.Wrap(err, "getting event status.")
+		return errors.Wrap(err, "getting status from event service")
 	}
 	es.metrics.SetLatestEventTick(status.AvailableTick)
 	endTick := int(math.Min(float64(status.AvailableTick), float64(currentTick)))
@@ -130,12 +130,12 @@ func (es *EventService) processTickEvents(ctx context.Context, tick int) error {
 	tickEvents, err := es.client.GetEvents(ctx, uint32(tick)) // attention. need to cast here.
 	if err != nil {
 		slog.Warn("Error getting events.", "tick", tick)
-		return errors.Wrapf(err, "Error getting events for tick [%d].", tick)
+		return errors.Wrapf(err, "getting events for tick [%d]", tick)
 	}
 
 	eventCount, err := es.eventProcessor.ProcessTickEvents(ctx, tickEvents)
 	if err != nil {
-		return errors.Wrapf(err, "processing events for tick [%d].", tick)
+		return errors.Wrapf(err, "processing events for tick [%d]", tick)
 	}
 
 	err = es.repository.UpdateLatestTick(ctx, tick)

@@ -59,7 +59,7 @@ func (ep *EventProcessor) ProcessTickEvents(ctx context.Context, tickEvents *eve
 				}
 				eventData, err := base64.StdEncoding.DecodeString(event.EventData)
 				if err != nil {
-					return 0, errors.Wrap(err, "base64 decoding event data.")
+					return 0, errors.Wrap(err, "base64 decoding event data")
 				}
 				var dbId int
 				eventType := uint8(event.EventType)
@@ -123,7 +123,7 @@ func (ep *EventProcessor) getEventId(event *eventspb.Event) (uint64, error) {
 		return event.Header.EventId, nil
 	} else {
 		slog.Error("Event header not found.", "event", event)
-		return 0, errors.New("No event header found.")
+		return 0, errors.New("no event header found")
 	}
 
 }
