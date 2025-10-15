@@ -76,37 +76,6 @@
         ]
       }
     },
-    "/api/v1/ticks/{tick}/events/asset-issuances": {
-      "get": {
-        "operationId": "TransferService_GetAssetIssuanceEventsForTick",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/protoAssetIssuanceEventResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "tick",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int64"
-          }
-        ],
-        "tags": [
-          "TransferService"
-        ]
-      }
-    },
     "/api/v1/ticks/{tick}/events/asset-transfers": {
       "get": {
         "operationId": "TransferService_GetAssetChangeEventsForTick",
@@ -285,62 +254,6 @@
             "type": "object",
             "$ref": "#/definitions/protoAssetChangeEvent"
           }
-        },
-        "issuanceEvents": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/protoAssetIssuanceEvent"
-          }
-        }
-      }
-    },
-    "protoAssetIssuanceEvent": {
-      "type": "object",
-      "properties": {
-        "issuerId": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "numberOfShares": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "unitOfMeasurement": {
-          "type": "string"
-        },
-        "numberOfDecimalPlaces": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "transactionHash": {
-          "type": "string"
-        },
-        "tick": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "eventType": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "protoAssetIssuanceEventResponse": {
-      "type": "object",
-      "properties": {
-        "latestTick": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "events": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/protoAssetIssuanceEvent"
-          }
         }
       }
     },
@@ -443,7 +356,7 @@
       }
     }
   },
-  "host": "dev02.qubic.org",
+  "host": "qxinfo.qubic.org",
   "basePath": "/gotr",
   "schemes": [
     "https"

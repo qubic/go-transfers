@@ -29,15 +29,9 @@ message AssetChangeEventsResponse {
   repeated AssetChangeEvent events = 2;
 }
 
-message AssetIssuanceEventResponse {
-  uint32 latestTick = 1;
-  repeated AssetIssuanceEvent events = 2;
-}
-
 message AssetEventsResponse {
   uint32 latestTick = 1;
   repeated AssetChangeEvent changeEvents = 2;
-  repeated AssetIssuanceEvent issuanceEvents = 3;
 }
 
 message QuTransferEventsResponse {
@@ -65,17 +59,6 @@ message AssetChangeEvent {
   uint32 eventType = 8;
 }
 
-message AssetIssuanceEvent {
-  string issuerId = 1;
-  string name = 2;
-  uint64 numberOfShares = 3;
-  string unitOfMeasurement = 4;
-  uint32 numberOfDecimalPlaces = 5;
-  string transactionHash = 6;
-  uint32 tick = 7;
-  uint32 eventType = 8;
-}
-
 service TransferService {
 
   rpc Health(google.protobuf.Empty) returns (HealthResponse) {
@@ -93,12 +76,6 @@ service TransferService {
   rpc GetAssetChangeEventsForTick(TickRequest) returns (AssetChangeEventsResponse) {
     option (google.api.http) = {
       get: "/api/v1/ticks/{tick}/events/asset-transfers"
-    };
-  }
-
-  rpc GetAssetIssuanceEventsForTick(TickRequest) returns (AssetIssuanceEventResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/ticks/{tick}/events/asset-issuances"
     };
   }
 

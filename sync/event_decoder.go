@@ -2,6 +2,7 @@ package sync
 
 import (
 	"bytes"
+
 	"github.com/pkg/errors"
 	eventspb "github.com/qubic/go-events/proto"
 	"github.com/qubic/go-qubic/common"
@@ -32,31 +33,6 @@ func DecodeQuTransferEvent(eventData []byte) (*eventspb.DecodedEvent, error) {
 			Amount:   event.Amount,
 		},
 	}
-	return &eventspb.DecodedEvent{Event: &pbEvent}, nil
-}
-
-func DecodeAssetIssuanceEvent(eventData []byte) (*eventspb.DecodedEvent, error) {
-	var event events.AssetIssuanceEvent
-	err := event.UnmarshalBinary(eventData)
-	if err != nil {
-		return nil, errors.Wrap(err, "unmarshalling asset issuance event")
-	}
-
-	sourceID, err := common.PubKeyToIdentity(event.SourceIdentityPubKey)
-	if err != nil {
-		return nil, errors.Wrap(err, "converting source identity public key")
-	}
-
-	pbEvent := eventspb.DecodedEvent_AssetIssuanceEvent_{
-		AssetIssuanceEvent: &eventspb.DecodedEvent_AssetIssuanceEvent{
-			SourceId:         sourceID.String(),
-			AssetName:        string(bytes.TrimRight(event.AssetName[:], "\x00")),
-			NumberOfDecimals: uint32(event.NumberOfDecimals),
-			MeasurementUnit:  event.MeasurementUnit[:],
-			NumberOfShares:   event.NumberOfShares,
-		},
-	}
-
 	return &eventspb.DecodedEvent{Event: &pbEvent}, nil
 }
 

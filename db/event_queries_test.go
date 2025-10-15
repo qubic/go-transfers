@@ -2,10 +2,10 @@ package db
 
 import (
 	"context"
-	"encoding/base64"
-	"github.com/stretchr/testify/assert"
 	"go-transfers/proto"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestPgRepository_GetAssetChangeEventsForTick(t *testing.T) {
@@ -34,31 +34,6 @@ func TestPgRepository_GetAssetChangeEventsForTick(t *testing.T) {
 	cleanupEventTestData(t, transactionId, tickId, eventId)
 	deleteEntity(sourceEntityId, t)
 	deleteEntity(destinationEntityId, t)
-}
-
-func TestPgRepository_GetAssetIssuanceEventsForTick(t *testing.T) {
-	tickId, transactionId, eventId := setupEventTestData(t, 1)
-	assetId, err := repository.getAssetId(context.Background(), AAA, "QX") // don't clean up
-	assert.Nil(t, err)
-	assetEventId, err := repository.insertAssetIssuanceEvent(context.Background(), eventId, assetId, 123456789, base64.StdEncoding.EncodeToString([]byte{0, 0, 0, 0, 0, 0, 0}), 2)
-	assert.Nil(t, err)
-
-	events, err := repository.GetAssetIssuanceEventsForTick(context.Background(), testTickNumber)
-	assert.Nil(t, err)
-	assert.Equal(t, 1, len(events))
-	assert.Equal(t, &proto.AssetIssuanceEvent{
-		IssuerId:              AAA,
-		Name:                  "QX",
-		NumberOfShares:        123456789,
-		UnitOfMeasurement:     "AAAAAAAAAA==",
-		NumberOfDecimalPlaces: 2,
-		TransactionHash:       testTransactionHash,
-		Tick:                  testTickNumber,
-		EventType:             1,
-	}, events[0])
-
-	deleteAssetIssuanceEvent(assetEventId, t)
-	cleanupEventTestData(t, transactionId, tickId, eventId)
 }
 
 func TestPgRepository_GetQuTransferEventsForTick(t *testing.T) {

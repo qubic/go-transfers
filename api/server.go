@@ -2,11 +2,16 @@ package api
 
 import (
 	"context"
+	"go-transfers/proto"
+	"net"
+	"net/http"
+	"strconv"
+	"strings"
+
 	"github.com/google/uuid"
 	"github.com/gookit/slog"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/qubic/go-qubic/common"
-	"go-transfers/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -14,10 +19,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"net"
-	"net/http"
-	"strconv"
-	"strings"
 )
 
 type Server struct {
@@ -30,7 +31,6 @@ type Server struct {
 type Repository interface {
 	GetLatestTick(ctx context.Context) (int, error)
 	GetAssetChangeEventsForTick(ctx context.Context, tickNumber int) ([]*proto.AssetChangeEvent, error)
-	GetAssetIssuanceEventsForTick(ctx context.Context, tickNumber int) ([]*proto.AssetIssuanceEvent, error)
 	GetQuTransferEventsForTick(ctx context.Context, tickNumber int) ([]*proto.QuTransferEvent, error)
 	GetQuTransferEventsForEntity(ctx context.Context, identity string) ([]*proto.QuTransferEvent, error)
 	GetAssetChangeEventsForEntity(ctx context.Context, identity string) ([]*proto.AssetChangeEvent, error)
@@ -81,14 +81,9 @@ func (s *Server) GetAssetEventsForTick(ctx context.Context, request *proto.TickR
 	if err != nil {
 		return nil, retrieveEventsError("getting asset change events.", "tickNumber", tickNumber, "error", err)
 	}
-	issuanceEvents, err := s.repository.GetAssetIssuanceEventsForTick(ctx, int(tickNumber))
-	if err != nil {
-		return nil, retrieveEventsError("getting asset issuance events.", "tickNumber", tickNumber, "error", err)
-	}
 	response := proto.AssetEventsResponse{
-		LatestTick:     uint32(latestTick),
-		ChangeEvents:   assetChangeEvents,
-		IssuanceEvents: issuanceEvents,
+		LatestTick:   uint32(latestTick),
+		ChangeEvents: assetChangeEvents,
 	}
 	return &response, nil
 }
@@ -108,24 +103,6 @@ func (s *Server) GetAssetChangeEventsForTick(ctx context.Context, request *proto
 		return nil, retrieveEventsError("getting asset change events.", "tickNumber", tickNumber, "error", err)
 	}
 	response := proto.AssetChangeEventsResponse{LatestTick: uint32(latestTick), Events: events}
-	return &response, nil
-}
-
-func (s *Server) GetAssetIssuanceEventsForTick(ctx context.Context, request *proto.TickRequest) (*proto.AssetIssuanceEventResponse, error) {
-	tickNumber := request.GetTick()
-	latestTick, err := s.repository.GetLatestTick(ctx)
-	if err != nil {
-		return nil, retrieveEventsError("getting latest tick.", "error", err)
-	}
-	if latestTick < int(tickNumber) {
-		return nil, tickNotFound(tickNumber, latestTick)
-	}
-	slog.Debug("Get asset issuances:", "tick", tickNumber, "latest", latestTick)
-	events, err := s.repository.GetAssetIssuanceEventsForTick(ctx, int(tickNumber))
-	if err != nil {
-		return nil, retrieveEventsError("getting asset issuance events.", "tickNumber", tickNumber, "error", err)
-	}
-	response := proto.AssetIssuanceEventResponse{LatestTick: uint32(latestTick), Events: events}
 	return &response, nil
 }
 

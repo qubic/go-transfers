@@ -3,11 +3,12 @@ package sync
 import (
 	"context"
 	"encoding/base64"
+	"strings"
+
 	"github.com/gookit/slog"
 	"github.com/pkg/errors"
 	eventspb "github.com/qubic/go-events/proto"
 	"github.com/qubic/go-qubic/sdk/events"
-	"strings"
 )
 
 const AAA = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
@@ -47,18 +48,18 @@ func (ep *EventProcessor) ProcessTickEvents(ctx context.Context, tickEvents *eve
 
 			transactionId, err := ep.getOrCreateTransaction(ctx, tickEvents.GetTick(), transactionEvents.GetTxId())
 			if err != nil {
-				return -1, errors.Wrap(err, "storing transaction")
+				return 0, errors.Wrap(err, "storing transaction")
 			}
 
 			for _, event := range relevantEvents {
 				slog.Debug("Processing event.", "event", event)
 				eventId, err := ep.getOrCreateEvent(ctx, event, transactionId)
 				if err != nil {
-					return -1, errors.Wrap(err, "storing event")
+					return 0, errors.Wrap(err, "storing event")
 				}
 				eventData, err := base64.StdEncoding.DecodeString(event.EventData)
 				if err != nil {
-					return -1, errors.Wrap(err, "base64 decoding event data.")
+					return 0, errors.Wrap(err, "base64 decoding event data.")
 				}
 				var dbId int
 				eventType := uint8(event.EventType)
@@ -69,14 +70,12 @@ func (ep *EventProcessor) ProcessTickEvents(ctx context.Context, tickEvents *eve
 					dbId, err = ep.storeAssetOwnershipChangeEvent(ctx, eventData, eventId)
 				case eventType == events.EventTypeAssetPossessionChange:
 					dbId, err = ep.storeAssetPossessionChangeEvent(ctx, eventData, eventId)
-				case eventType == events.EventTypeAssetIssuance:
-					dbId, err = ep.storeAssetIssuanceEvent(ctx, eventData, eventId)
 				default:
 					err = errors.New("unexpected unhandled event type.")
 				}
 				if err != nil {
 					slog.Error("Could not process event.", "tick", tickEvents.GetTick(), "transactionId", transactionId, "eventId", eventId, "error", err)
-					return -1, errors.Wrap(err, "storing event details")
+					return 0, errors.Wrap(err, "storing event details")
 				} else {
 					slog.Info("Stored event:", "id", dbId, "type", eventType, "transaction", transactionEvents.GetTxId())
 					count++
@@ -127,29 +126,6 @@ func (ep *EventProcessor) getEventId(event *eventspb.Event) (uint64, error) {
 		return 0, errors.New("No event header found.")
 	}
 
-}
-
-func (ep *EventProcessor) storeAssetIssuanceEvent(ctx context.Context, eventData []byte, eventId int) (int, error) {
-	decodedEvent, err := DecodeAssetIssuanceEvent(eventData)
-	if err != nil {
-		return -1, errors.Wrap(err, "decoding asset issuance")
-	}
-	assetIssuanceEvent := decodedEvent.GetAssetIssuanceEvent()
-	assetId, err := ep.repository.GetOrCreateAsset(ctx, assetIssuanceEvent.GetSourceId(), assetIssuanceEvent.GetAssetName())
-	if err != nil {
-		return -1, errors.Wrap(err, "storing asset issuance")
-	}
-	unitOfMeasurement := base64.StdEncoding.EncodeToString(assetIssuanceEvent.GetMeasurementUnit())
-	assetIssuanceEventId, err := ep.repository.GetOrCreateAssetIssuanceEvent(ctx, eventId, assetId,
-		assetIssuanceEvent.GetNumberOfShares(),
-		unitOfMeasurement,
-		assetIssuanceEvent.GetNumberOfDecimals())
-	if err != nil {
-		return -1, errors.Wrap(err, "storing asset issuance")
-	} else {
-		slog.Debug("Stored asset issuance event.", "id", assetIssuanceEventId)
-	}
-	return assetIssuanceEventId, nil
 }
 
 func (ep *EventProcessor) storeAssetPossessionChangeEvent(ctx context.Context, eventData []byte, eventId int) (int, error) {
@@ -263,6 +239,5 @@ func isRelevantEvent(ev *eventspb.Event) bool {
 		return !ignore
 	}
 	return eventType == events.EventTypeAssetPossessionChange ||
-		eventType == events.EventTypeAssetOwnershipChange ||
-		eventType == events.EventTypeAssetIssuance
+		eventType == events.EventTypeAssetOwnershipChange
 }

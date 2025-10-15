@@ -2,9 +2,10 @@ package db
 
 import (
 	"context"
+	"go-transfers/proto"
+
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
-	"go-transfers/proto"
 )
 
 // qu transfer events
@@ -83,32 +84,6 @@ func (r *PgRepository) GetAssetChangeEventsForTick(ctx context.Context, tickNumb
 	err := r.db.SelectContext(ctx, &events, selectSql, tickNumber)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting asset change events")
-	}
-	return events, nil
-}
-
-func (r *PgRepository) GetAssetIssuanceEventsForTick(ctx context.Context, tickNumber int) ([]*proto.AssetIssuanceEvent, error) {
-	selectSql := `select issuer.identity issuerId,
-       		a.name, 
-       		aie.number_of_shares numberOfShares,
-       		aie.unit_of_measurement unitOfMeasurement,
-       		aie.number_of_decimal_places numberOfDecimalPlaces,
-       		tx.hash transactionHash,
-       		ti.tick_number tick,
-       		e.event_type eventType
-		from asset_issuance_events aie
-		join events e on aie.event_id = e.id
-		join transactions tx on e.transaction_id = tx.id
-		join ticks ti on tx.tick_id = ti.id
-		join assets a on aie.asset_id = a.id
-		join entities issuer on a.issuer_id = issuer.id
-		where ti.tick_number = $1
-		and e.event_type = 1
-		order by e.event_id;`
-	var events []*proto.AssetIssuanceEvent
-	err := r.db.SelectContext(ctx, &events, selectSql, tickNumber)
-	if err != nil {
-		return nil, errors.Wrap(err, "getting asset issuance events")
 	}
 	return events, nil
 }

@@ -2,12 +2,13 @@ package sync
 
 import (
 	"context"
-	"github.com/gookit/slog"
-	"github.com/pkg/errors"
-	eventspb "github.com/qubic/go-events/proto"
 	"go-transfers/client"
 	"math"
 	"time"
+
+	"github.com/gookit/slog"
+	"github.com/pkg/errors"
+	eventspb "github.com/qubic/go-events/proto"
 )
 
 type EventClient interface {
@@ -46,15 +47,14 @@ func NewEventService(c EventClient, ep *EventProcessor, r TickNumberRepository, 
 
 func (es *EventService) SyncInLoop() {
 	var count uint64
-	loopTick := time.Tick(time.Second * 1)
+	loopTick := time.Tick(time.Second)
 	for range loopTick {
-
 		err := es.sync(count)
 		count++
-		time.Sleep(time.Second)
-		if err != nil {
+		if err != nil { // TODO we should crash here, not log
 			slog.Error("processing tick events", "err", err.Error())
 		}
+		time.Sleep(time.Second)
 	}
 }
 

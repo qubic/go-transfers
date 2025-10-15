@@ -2,8 +2,9 @@ package db
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestPgRepository_GetOrCreateEvent_GivenNoEvent_ThenInsert(t *testing.T) {
@@ -102,42 +103,4 @@ func TestPgRepository_GetOrCreateAssetChangeEvent_GivenEntry_ThenGet(t *testing.
 	cleanupEventTestData(t, transactionId, tickId, eventId)
 	deleteEntity(sourceEntityId, t)
 	deleteEntity(destinationEntityId, t)
-}
-
-// asset issuance event
-
-func TestPgRepository_GetOrCreateAssetIssuanceEvent_GivenNone_ThenCreate(t *testing.T) {
-	tickId, transactionId, eventId := setupEventTestData(t, 1)
-	issuerId, err := repository.GetOrCreateEntity(context.Background(), "TEST_ISSUER_ID")
-	assert.Nil(t, err)
-	assetId, err := repository.GetOrCreateAsset(context.Background(), "TEST_ISSUER_ID", "A-NAME")
-	assert.Nil(t, err)
-
-	issuanceEventId, err := repository.GetOrCreateAssetIssuanceEvent(context.Background(), eventId, assetId, 1234567890, "AAAAAAAAAA==", 0)
-	assert.Nil(t, err)
-	assert.Greater(t, issuanceEventId, 0)
-
-	deleteAssetIssuanceEvent(issuanceEventId, t)
-	cleanupEventTestData(t, transactionId, tickId, eventId)
-	deleteAsset(assetId, t)
-	deleteEntity(issuerId, t)
-}
-
-func TestPgRepository_GetOrCreateAssetIssuanceEvent_GivenEvent_ThenGet(t *testing.T) {
-	tickId, transactionId, eventId := setupEventTestData(t, 1)
-	issuerId, err := repository.GetOrCreateEntity(context.Background(), "TEST_ISSUER_ID")
-	assert.Nil(t, err)
-	assetId, err := repository.GetOrCreateAsset(context.Background(), "TEST_ISSUER_ID", "A-NAME")
-	assert.Nil(t, err)
-	issuanceEventId, err := repository.insertAssetIssuanceEvent(context.Background(), eventId, assetId, 1234567890, "AAAAAAAAAA==", 2)
-	assert.Nil(t, err)
-
-	reloaded, err := repository.GetOrCreateAssetIssuanceEvent(context.Background(), eventId, assetId, 0, "", 0)
-	assert.Nil(t, err)
-	assert.Equal(t, issuanceEventId, reloaded)
-
-	deleteAssetIssuanceEvent(issuanceEventId, t)
-	cleanupEventTestData(t, transactionId, tickId, eventId)
-	deleteAsset(assetId, t)
-	deleteEntity(issuerId, t)
 }

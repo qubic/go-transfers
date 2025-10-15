@@ -3,21 +3,18 @@ package api
 import (
 	"context"
 	"flag"
-	"github.com/gookit/slog"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"go-transfers/proto"
 	"io"
 	"net/http"
 	"os"
 	"testing"
+
+	"github.com/gookit/slog"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type FakeRepository struct {
-}
-
-func (f FakeRepository) GetAssetIssuanceEventsForTick(_ context.Context, _ int) ([]*proto.AssetIssuanceEvent, error) {
-	return []*proto.AssetIssuanceEvent{}, nil
 }
 
 func (f FakeRepository) GetAssetChangeEventsForEntity(_ context.Context, _ string) ([]*proto.AssetChangeEvent, error) {
@@ -43,7 +40,7 @@ func (f FakeRepository) GetLatestTick(_ context.Context) (int, error) {
 func TestMain(m *testing.M) {
 
 	// Start server
-	srv := NewServer("0.0.0.0:8002", "0.0.0.0:8003", &FakeRepository{})
+	srv := NewServer("0.0.0.0:8081", "0.0.0.0:8080", &FakeRepository{})
 	err := srv.Start()
 	if err != nil {
 		os.Exit(-1)
@@ -59,7 +56,7 @@ func TestMain(m *testing.M) {
 func TestServer_whenHealth_thenReturnStatusUp(t *testing.T) {
 	httpClient := http.DefaultClient
 
-	response, err := httpClient.Get("http://localhost:8003/status/health")
+	response, err := httpClient.Get("http://localhost:8080/status/health")
 	if err != nil {
 		t.Error(err)
 	}
@@ -79,43 +76,39 @@ func TestServer_whenHealth_thenReturnStatusUp(t *testing.T) {
 }
 
 func TestServer_GetAssetEventsForTick_thenReturnAssetEvents(t *testing.T) {
-	callServiceVerifyNoError(t, "http://localhost:8003/api/v1/ticks/1234/events/assets")
-}
-
-func TestServer_GetAssetIssuanceEventsForTick_thenReturnAssetIssuances(t *testing.T) {
-	callServiceVerifyNoError(t, "http://localhost:8003/api/v1/ticks/1234/events/asset-issuances")
+	callServiceVerifyNoError(t, "http://localhost:8080/api/v1/ticks/1234/events/assets")
 }
 
 func TestServer_GetAssetTransfersForTick_thenReturnAssetTransfers(t *testing.T) {
-	callServiceVerifyNoError(t, "http://localhost:8003/api/v1/ticks/1234/events/asset-transfers")
+	callServiceVerifyNoError(t, "http://localhost:8080/api/v1/ticks/1234/events/asset-transfers")
 }
 
 func TestServer_GetAssetTransfersForTick_givenUnavailableTickNumber_thenReturnNotFound(t *testing.T) {
-	callServiceVerifyStatus(t, "http://localhost:8003/api/v1/ticks/12345/events/asset-transfers", http.StatusNotFound)
+	callServiceVerifyStatus(t, "http://localhost:8080/api/v1/ticks/12345/events/asset-transfers", http.StatusNotFound)
 }
 
 func TestServer_GetQuTransfersForTick_thenStatusOk(t *testing.T) {
-	callServiceVerifyNoError(t, "http://localhost:8003/api/v1/ticks/1234/events/qu-transfers")
+	callServiceVerifyNoError(t, "http://localhost:8080/api/v1/ticks/1234/events/qu-transfers")
 }
 
 func TestServer_GetQuTransfersForTick_givenUnavailableTickNumber_thenReturnNotFound(t *testing.T) {
-	callServiceVerifyStatus(t, "http://localhost:8003/api/v1/ticks/12345/events/qu-transfers", http.StatusNotFound)
+	callServiceVerifyStatus(t, "http://localhost:8080/api/v1/ticks/12345/events/qu-transfers", http.StatusNotFound)
 }
 
 func TestServer_GetAssetTransfersForEntity_thenReturnAssetTransfers(t *testing.T) {
-	callServiceVerifyNoError(t, "http://localhost:8003/api/v1/entities/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFXIB/events/asset-transfers")
+	callServiceVerifyNoError(t, "http://localhost:8080/api/v1/entities/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFXIB/events/asset-transfers")
 }
 
 func TestServer_GetAssetTransfersForEntity_GivenInvalidIdentity_thenReturnBadRequest(t *testing.T) {
-	callServiceVerifyStatus(t, "http://localhost:8003/api/v1/entities/BLAH/events/asset-transfers", http.StatusBadRequest)
+	callServiceVerifyStatus(t, "http://localhost:8080/api/v1/entities/BLAH/events/asset-transfers", http.StatusBadRequest)
 }
 
 func TestServer_GetQuTransfersForEntity_thenStatusOk(t *testing.T) {
-	callServiceVerifyNoError(t, "http://localhost:8003/api/v1/entities/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFXIB/events/qu-transfers")
+	callServiceVerifyNoError(t, "http://localhost:8080/api/v1/entities/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFXIB/events/qu-transfers")
 }
 
 func TestServer_GetQuTransfersForEntity_givenInvalidIdentity_thenBadRequest(t *testing.T) {
-	callServiceVerifyStatus(t, "http://localhost:8003/api/v1/entities/BLAH/events/qu-transfers", http.StatusBadRequest)
+	callServiceVerifyStatus(t, "http://localhost:8080/api/v1/entities/BLAH/events/qu-transfers", http.StatusBadRequest)
 }
 
 //goland:noinspection SpellCheckingInspection
