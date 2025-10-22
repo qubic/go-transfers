@@ -13,12 +13,12 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.23.2
-	github.com/qubic/go-events v0.4.0
-	github.com/qubic/go-qubic v0.3.0
+	github.com/qubic/go-events v0.5.0
+	github.com/qubic/go-qubic v0.3.2
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.39.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.39.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20251014184007-4626949a642f
+	google.golang.org/genproto/googleapis/api v0.0.0-20251020155222-88f65dc88635
 	google.golang.org/grpc v1.76.0
 	google.golang.org/protobuf v1.36.10
 )

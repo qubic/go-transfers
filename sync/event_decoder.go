@@ -60,13 +60,14 @@ func DecodeAssetOwnershipChangeEvent(eventData []byte) (*eventspb.DecodedEvent, 
 
 	pbEvent := eventspb.DecodedEvent_AssetOwnershipChangeEvent_{
 		AssetOwnershipChangeEvent: &eventspb.DecodedEvent_AssetOwnershipChangeEvent{
-			SourceId:         sourceID.String(),
-			DestId:           destID.String(),
-			IssuerId:         issuerID.String(),
-			AssetName:        string(bytes.TrimRight(event.AssetName[:], "\x00")),
-			NumberOfDecimals: uint32(event.NumberOfDecimals),
-			MeasurementUnit:  event.MeasurementUnit[:],
-			NumberOfShares:   event.NumberOfShares,
+			SourceId:              sourceID.String(),
+			DestId:                destID.String(),
+			IssuerId:              issuerID.String(),
+			AssetName:             string(bytes.TrimRight(event.AssetName[:], "\x00")),
+			NumberOfDecimals:      uint32(event.NumberOfDecimals),
+			MeasurementUnit:       event.MeasurementUnit[:],
+			NumberOfShares:        event.NumberOfShares,
+			ManagingContractIndex: event.ManagingContractIndex,
 		},
 	}
 
@@ -97,13 +98,14 @@ func DecodeAssetPossessionChangeEvent(eventData []byte) (*eventspb.DecodedEvent,
 
 	pbEvent := eventspb.DecodedEvent_AssetPossessionChangeEvent_{
 		AssetPossessionChangeEvent: &eventspb.DecodedEvent_AssetPossessionChangeEvent{
-			SourceId:         sourceID.String(),
-			DestId:           destID.String(),
-			IssuerId:         issuerID.String(),
-			AssetName:        convertAssetName(event),
-			NumberOfDecimals: uint32(event.NumberOfDecimals),
-			MeasurementUnit:  event.MeasurementUnit[:],
-			NumberOfShares:   event.NumberOfShares,
+			SourceId:              sourceID.String(),
+			DestId:                destID.String(),
+			IssuerId:              issuerID.String(),
+			AssetName:             convertAssetName(event),
+			NumberOfDecimals:      uint32(event.NumberOfDecimals),
+			MeasurementUnit:       event.MeasurementUnit[:],
+			NumberOfShares:        event.NumberOfShares,
+			ManagingContractIndex: event.ManagingContractIndex,
 		},
 	}
 

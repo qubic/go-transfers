@@ -6,6 +6,12 @@ package sync
 import (
 	"context"
 	"flag"
+	"go-transfers/client"
+	"go-transfers/db"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/ardanlabs/conf"
 	"github.com/gookit/slog"
 	"github.com/jmoiron/sqlx"
@@ -14,11 +20,6 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
-	"go-transfers/client"
-	"go-transfers/db"
-	"os"
-	"testing"
-	"time"
 )
 
 var (
