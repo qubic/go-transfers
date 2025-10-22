@@ -6,12 +6,13 @@ package client
 import (
 	"context"
 	"flag"
+	"os"
+	"testing"
+
 	"github.com/ardanlabs/conf"
 	"github.com/gookit/slog"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"testing"
 )
 
 var (

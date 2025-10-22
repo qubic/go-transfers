@@ -33,7 +33,7 @@ func TestEventDecoder_Decode_QuTransferEvent(t *testing.T) {
 //goland:noinspection SpellCheckingInspection
 func TestEventDecoder_Decode_AssetOwnershipChangeEvent(t *testing.T) {
 
-	eventData, err := base64.StdEncoding.DecodeString("sMmo18V9WMO9LstUtxvWC2ZfJc2/FZWKEUdAKOqNKDIvyKKaekppac06VyRMSMUCe1tpQO0R9znQUrQOndNX+ggwu2O/fV4WSsjL04aAYw/3Zwoevzn3IQtAvNyiU9Bf2XE+AAAAAABDRkIAAAAAAADQANAjGBU=")
+	eventData, err := base64.StdEncoding.DecodeString("QvMt7n7vPwdDhVUbxbRVOxMpx/7trku3V9udvL77Hfm0XNyWnewpiwi3DPqGYe9p1T1ee0dgKChsGN91xWt9RAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAKAAAAAAAAAE1MTQAAAAAAAAAAAAAAAA==")
 	if err != nil {
 		t.Error(err)
 	}
@@ -42,23 +42,27 @@ func TestEventDecoder_Decode_AssetOwnershipChangeEvent(t *testing.T) {
 		t.Error(err)
 	}
 
-	if decoded.GetAssetOwnershipChangeEvent().GetSourceId() != "AKJDFZYITPCNRFJEBDFRNBDUJYIAALOAFGPDFGSQAEHRQYBWQHVYSWLBXHQE" {
+	if decoded.GetAssetOwnershipChangeEvent().GetSourceId() != "OEJPBLJQYOIMFADQMWCTAZYYWUSBNNJSMPQIXTNKIFBXAGTTYUYUTCGHUDDL" {
 		t.Error(decoded.GetAssetOwnershipChangeEvent().GetSourceId())
 	}
 
-	if decoded.GetAssetOwnershipChangeEvent().GetDestId() != "VFWIEWBYSIMPBDHBXYFJVMLGKCCABZKRYFLQJVZTRBUOYSUHOODPVAHHKXPJ" {
+	if decoded.GetAssetOwnershipChangeEvent().GetDestId() != "SDXHYCDNHADCBEUUVBZWKYESTZBDLHDRAKDCSEKIEBCPFIZLCHGDQSZBZMSL" {
 		t.Error(decoded.GetAssetOwnershipChangeEvent().GetDestId())
 	}
 
-	if decoded.GetAssetOwnershipChangeEvent().GetAssetName() != "CFB" {
+	if decoded.GetAssetOwnershipChangeEvent().GetAssetName() != "MLM" {
 		t.Error(decoded.GetAssetOwnershipChangeEvent().GetAssetName())
 	}
 
-	if decoded.GetAssetOwnershipChangeEvent().GetIssuerId() != "CFBMEMZOIDEXQAUXYYSZIURADQLAPWPMNJXQSNVQZAHYVOPYUKKJBJUCTVJL" {
+	if decoded.GetAssetOwnershipChangeEvent().GetIssuerId() != "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFXIB" {
 		t.Error(decoded.GetAssetOwnershipChangeEvent().GetIssuerId())
 	}
 
-	if decoded.GetAssetOwnershipChangeEvent().GetNumberOfShares() != 4092377 {
+	if decoded.GetAssetOwnershipChangeEvent().GetManagingContractIndex() != 10 {
+		t.Error(decoded.GetAssetOwnershipChangeEvent().GetManagingContractIndex())
+	}
+
+	if decoded.GetAssetOwnershipChangeEvent().GetNumberOfShares() != 1 {
 		t.Error(decoded.GetAssetOwnershipChangeEvent().GetNumberOfShares())
 	}
 }
@@ -66,7 +70,7 @@ func TestEventDecoder_Decode_AssetOwnershipChangeEvent(t *testing.T) {
 //goland:noinspection SpellCheckingInspection
 func TestEventDecoder_Decode_AssetPossessionChangeEvent(t *testing.T) {
 
-	eventData, err := base64.StdEncoding.DecodeString("sMmo18V9WMO9LstUtxvWC2ZfJc2/FZWKEUdAKOqNKDIvyKKaekppac06VyRMSMUCe1tpQO0R9znQUrQOndNX+ggwu2O/fV4WSsjL04aAYw/3Zwoevzn3IQtAvNyiU9Bf2XE+AAAAAABDRkIAAAAAAADQANAjGBU=")
+	eventData, err := base64.StdEncoding.DecodeString("QvMt7n7vPwdDhVUbxbRVOxMpx/7trku3V9udvL77Hfm0XNyWnewpiwi3DPqGYe9p1T1ee0dgKChsGN91xWt9RAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAKAAAAAAAAAE1MTQAAAAAAAAAAAAAAAA==")
 	if err != nil {
 		t.Error(err)
 	}
@@ -75,23 +79,27 @@ func TestEventDecoder_Decode_AssetPossessionChangeEvent(t *testing.T) {
 		t.Error(err)
 	}
 
-	if decoded.GetAssetPossessionChangeEvent().GetSourceId() != "AKJDFZYITPCNRFJEBDFRNBDUJYIAALOAFGPDFGSQAEHRQYBWQHVYSWLBXHQE" {
+	if decoded.GetAssetPossessionChangeEvent().GetSourceId() != "OEJPBLJQYOIMFADQMWCTAZYYWUSBNNJSMPQIXTNKIFBXAGTTYUYUTCGHUDDL" {
 		t.Error(decoded.GetAssetPossessionChangeEvent().GetSourceId())
 	}
 
-	if decoded.GetAssetPossessionChangeEvent().GetDestId() != "VFWIEWBYSIMPBDHBXYFJVMLGKCCABZKRYFLQJVZTRBUOYSUHOODPVAHHKXPJ" {
+	if decoded.GetAssetPossessionChangeEvent().GetDestId() != "SDXHYCDNHADCBEUUVBZWKYESTZBDLHDRAKDCSEKIEBCPFIZLCHGDQSZBZMSL" {
 		t.Error(decoded.GetAssetPossessionChangeEvent().GetDestId())
 	}
 
-	if decoded.GetAssetPossessionChangeEvent().GetAssetName() != "CFB" {
+	if decoded.GetAssetPossessionChangeEvent().GetAssetName() != "MLM" {
 		t.Error(decoded.GetAssetPossessionChangeEvent().GetAssetName())
 	}
 
-	if decoded.GetAssetPossessionChangeEvent().GetIssuerId() != "CFBMEMZOIDEXQAUXYYSZIURADQLAPWPMNJXQSNVQZAHYVOPYUKKJBJUCTVJL" {
+	if decoded.GetAssetPossessionChangeEvent().GetIssuerId() != "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFXIB" {
 		t.Error(decoded.GetAssetPossessionChangeEvent().GetIssuerId())
 	}
 
-	if decoded.GetAssetPossessionChangeEvent().GetNumberOfShares() != 4092377 {
+	if decoded.GetAssetPossessionChangeEvent().GetManagingContractIndex() != 10 {
+		t.Error(decoded.GetAssetOwnershipChangeEvent().GetManagingContractIndex())
+	}
+
+	if decoded.GetAssetPossessionChangeEvent().GetNumberOfShares() != 1 {
 		t.Error(decoded.GetAssetPossessionChangeEvent().GetNumberOfShares())
 	}
 }
