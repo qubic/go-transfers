@@ -1,3 +1,9 @@
+> [!WARNING]
+> **This repository is archived and no longer maintained.**
+>
+> The project is no longer in use. The code is kept for reference only — it will not receive
+> updates, bug fixes or security patches, and issues and pull requests are not being accepted.
+
 # go transfers service
 
 This integration layer service provides asset and qu transfer information to integrators. The information is based
